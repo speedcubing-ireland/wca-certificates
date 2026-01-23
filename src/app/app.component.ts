@@ -33,17 +33,11 @@ export class AppComponent {
   constructor (
           public apiService: ApiService,
           public printService: PrintService) {
-      if (this.apiService.oauthToken) {
-        this.handleGetCompetitions();
-      }
-  }
-
-  handleLoginToWca() {
-    this.apiService.logIn();
+      this.handleGetCompetitions();
   }
 
   handleGetCompetitions() {
-    this.apiService.getRecentCompetitions().subscribe(comps => {
+    this.apiService.getIrishCompetitions().subscribe(comps => {
       this.competitionsToChooseFrom = comps;
       this.categorizeCompetitions();
     });
@@ -120,7 +114,8 @@ export class AppComponent {
         this.competitionId = null;
       }
     }, (error: any) => {
-      return this.error = error?.error?.error || error?.message;
+      this.loading = false;
+      this.error = error?.error?.error || error?.message || 'Failed to load competition data';
     });
   }
 

@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import {Observable, forkJoin, of} from 'rxjs';
+import {map, catchError} from 'rxjs/operators';
 import {environment} from '../environments/environment';
 import {LogglyService} from '../loggly/loggly.service';
 
@@ -9,18 +10,23 @@ import {LogglyService} from '../loggly/loggly.service';
 })
 export class ApiService {
 
-  public oauthToken;
-  private headerParams: HttpHeaders;
   private logglyService: LogglyService;
+  private headerParams: HttpHeaders;
 
   private ONE_YEAR = 365;
   private EIGHT_WEEKS = 56;
+  private UNOFFICIAL_API_BASE = 'https://raw.githubusercontent.com/speedcubing-ireland/wca-analysis/api';
+  private NORTHERN_IRELAND_COUNTIES = [
+    'County Antrim',
+    'County Armagh',
+    'County Down',
+    'County Fermanagh',
+    'County Londonderry',
+    'County Tyrone'
+  ];
 
   constructor(private httpClient: HttpClient) {
-    this.getToken();
-
     this.headerParams = new HttpHeaders();
-    this.headerParams = this.headerParams.set('Authorization', `Bearer ${this.oauthToken}`);
     this.headerParams = this.headerParams.set('Content-Type', 'application/json');
 
     this.initLoggly();
@@ -35,34 +41,63 @@ export class ApiService {
     });
   }
 
-  private getToken(): void {
-    const hash = window.location.hash.slice(1, window.location.hash.length - 1);
-    const hashParams = new URLSearchParams(hash);
-    if (hashParams.has('access_token')) {
-      this.oauthToken = hashParams.get('access_token');
+  private isNorthernIreland(city: string): boolean {
+    return this.NORTHERN_IRELAND_COUNTIES.some(county => city.includes(county));
+  }
+
+  private mapToCompetitionFormat(data: any): any {
+    return {
+      id: data.id,
+      name: data.name,
+      start_date: data.date.from,
+      end_date: data.date.till,
+      city: data.city,
+      country: data.country
+    };
+  }
+
+  getIrishCompetitions(): Observable<any> {
+    const irishUrl = `${this.UNOFFICIAL_API_BASE}/competitions/IE.json`;
+    const ukUrl = `${this.UNOFFICIAL_API_BASE}/competitions/GB.json`;
+
+    interface ApiResponse {
+      items?: any[];
     }
-  }
 
-  logIn(): void {
-    window.location.href = `${environment.wcaUrl}/oauth/authorize?client_id=${environment.wcaAppId}`
-        + `&redirect_uri=${environment.appUrl}&response_type=token&scope=manage_competitions`;
-  }
-
-  getRecentCompetitions(): Observable<any> {
-    let url = `${environment.wcaUrl}/api/v0/competitions?managed_by_me=true`;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - (environment.testMode ? this.ONE_YEAR : this.EIGHT_WEEKS));
-    url += `&start=${startDate.toISOString()}`;
-    return this.httpClient.get(url, {headers: this.headerParams});
+    return forkJoin({
+      irish: this.httpClient.get<ApiResponse>(irishUrl).pipe(
+        catchError(() => of<ApiResponse>({items: []}))
+      ),
+      uk: this.httpClient.get<ApiResponse>(ukUrl).pipe(
+        catchError(() => of<ApiResponse>({items: []}))
+      )
+    }).pipe(
+      map(({irish, uk}) => {
+        const irishComps = ((irish as ApiResponse).items || []).map((comp: any) => this.mapToCompetitionFormat(comp));
+        const niComps = ((uk as ApiResponse).items || [])
+          .filter((comp: any) => this.isNorthernIreland(comp.city))
+          .map((comp: any) => this.mapToCompetitionFormat(comp));
+        
+        const allComps = [...irishComps, ...niComps];
+        
+        // Filter by date range (similar to original logic)
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - (environment.testMode ? this.ONE_YEAR : this.EIGHT_WEEKS));
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + (environment.testMode ? this.ONE_YEAR : this.EIGHT_WEEKS));
+        
+        return allComps.filter((comp: any) => {
+          const compEndDate = new Date(comp.end_date);
+          return compEndDate >= startDate && new Date(comp.start_date) <= endDate;
+        }).sort((a: any, b: any) => {
+          return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
+        });
+      })
+    );
   }
 
   getWcif(competitionId): Observable<any> {
-    // if (environment.testMode) {
-    //   return this.httpClient.get(`https://www.worldcubeassociation.org/api/v0/competitions/BelgianNationals2022/wcif/public`,
-    //     {headers: this.headerParams});
-    // }
-    return this.httpClient.get(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif`,
-      {headers: this.headerParams});
+    return this.httpClient.get(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif/public`);
   }
 
   logUserClicksDownloadCertificatesAsPdf(competitionId: any) {
