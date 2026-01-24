@@ -2,7 +2,9 @@
 
 A web application for generating podium and participation certificates for World Cube Association (WCA) speedcubing competitions. Built primarily for competitions in Ireland and Northern Ireland.
 
-**Live App:** https://goosly.github.io/wca-certificates/
+Originally forked from https://github.com/Goosly/wca-certificates
+
+**Live App:** https://speedcubing-ireland.github.io/wca-certificates/
 
 ## Features
 
