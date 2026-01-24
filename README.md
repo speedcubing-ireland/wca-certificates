@@ -43,6 +43,27 @@ Originally forked from https://github.com/Goosly/wca-certificates
 - Node.js 12.x or 14.x (LTS recommended; Node 16+ may have compatibility issues with Angular 11)
 - Angular CLI 11.x
 
+### Setting up Node.js with nvm
+
+If you have a newer version of Node.js installed, use [nvm](https://github.com/nvm-sh/nvm) to install and switch to Node 12:
+
+```bash
+# Install Node 12
+nvm install 12
+
+# Use Node 12 in current shell
+nvm use 12
+
+# Verify version
+node --version  # Should show v12.x.x
+```
+
+### Installing Angular CLI 11
+
+```bash
+npm install -g @angular/cli@11
+```
+
 ### Installation
 
 ```bash
