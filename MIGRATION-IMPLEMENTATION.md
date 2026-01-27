@@ -7,7 +7,7 @@
 | Phase 0 | ✅ Complete | Cypress E2E tests setup |
 | Phase 1 | ✅ Complete | Pre-migration cleanup |
 | Phase 2 | ✅ Complete | Sequential Angular updates (11→19) |
-| Phase 3 | ⏳ Pending | Replace TSLint with ESLint |
+| Phase 3 | ✅ Complete | Replace TSLint with ESLint |
 | Phase 4 | ⏳ Pending | Post-migration updates |
 
 ### Angular Version Progress
@@ -216,15 +216,30 @@ git add -A && git commit -m "Upgrade to Angular 19"
 
 ## Phase 3: Replace TSLint with ESLint
 
-After reaching Angular 12+:
+ESLint has been set up with Angular ESLint for modern linting:
+
+### Installation
 ```bash
 ng add @angular-eslint/schematics
 ```
 
-This will:
-- Install ESLint and Angular ESLint packages
-- Create `.eslintrc.json` configuration
-- Update `angular.json` with ESLint builder
+### Configuration
+ESLint is configured in `eslint.config.js` (flat config format) with:
+- TypeScript ESLint rules
+- Angular ESLint rules for components and templates
+- Relaxed rules for legacy code migration:
+  - `@typescript-eslint/no-explicit-any`: warn (many `any` types in legacy code)
+  - `@angular-eslint/prefer-standalone`: off (uses NgModule pattern)
+  - `@angular-eslint/prefer-inject`: off (uses constructor injection)
+  - `@angular-eslint/template/prefer-control-flow`: off (uses *ngIf/*ngFor)
+  - `@typescript-eslint/no-unused-vars`: allows underscore-prefixed params
+
+### Running ESLint
+```bash
+npx ng lint
+```
+
+Current state: 0 errors, 57 warnings (mostly `any` types and label accessibility)
 
 ---
 

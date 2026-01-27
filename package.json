@@ -32,7 +32,8 @@
     "cy:open": "cypress open",
     "cy:run": "cypress run",
     "e2e": "start-server-and-test start http://localhost:4200 cy:run",
-    "e2e:open": "start-server-and-test start http://localhost:4200 cy:open"
+    "e2e:open": "start-server-and-test start http://localhost:4200 cy:open",
+    "lint": "ng lint"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "19.2.19",
@@ -42,8 +43,10 @@
     "@types/jasmine": "~3.6.0",
     "@types/jquery": "^3.5.29",
     "@types/node": "^20.19.30",
+    "angular-eslint": "21.0.1",
     "cypress": "^15.9.0",
-    "jasmine-core": "~3.6.0",
+    "eslint": "^9.39.1",
+    "jasmine-core": "^5.13.0",
     "jasmine-spec-reporter": "~5.0.0",
     "karma": "~6.4.2",
     "karma-chrome-launcher": "~3.2.0",
@@ -52,6 +55,7 @@
     "karma-jasmine-html-reporter": "^2.1.0",
     "start-server-and-test": "^2.1.3",
     "ts-node": "~10.9.2",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "typescript-eslint": "8.46.4"
   }
 }

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import { Location, LocationStrategy } from '@angular/common';
+import { Location } from '@angular/common';
 import {saveAs} from 'file-saver';
 import {Certificate} from './certificate';
 import {Event} from '@wca/helpers/lib/models/event';
@@ -11,7 +11,7 @@ import {getEventName, Person} from '@wca/helpers';
 import {Helpers} from './helpers';
 import * as JSZip from 'jszip';
 
-declare var pdfMake: any;
+declare const pdfMake: any;
 
 @Injectable({
   providedIn: 'root'
@@ -25,8 +25,8 @@ export class PrintService {
   public showLocalNames = false;
   public background: string = null;
   public participationBackground: string = null;
-  public countries: string = '';
-  public xOffset: number = 0;
+  public countries = '';
+  public xOffset = 0;
 
   public podiumCertificateJson = '';
   public podiumCertificateStyleJson = '';
@@ -104,9 +104,10 @@ export class PrintService {
       case '444bf':
       case '555bf':
         return formatCentiseconds(result['best']);
-      case '333mbf':
+      case '333mbf': {
         const mbldResult = result['best'];
         return formatMultiResult(decodeMultiResult(mbldResult));
+      }
       default:
         return formatCentiseconds(result['average'] > 0 ? result['average'] : result['best']);
     }
@@ -263,7 +264,7 @@ export class PrintService {
   public handleBackgroundSelected(files: FileList) {
     const reader = new FileReader();
     reader.readAsDataURL(files.item(0));
-    reader.onloadend = (e) => {
+    reader.onloadend = (_e) => {
       this.background = reader.result as string;
     };
   }
@@ -271,7 +272,7 @@ export class PrintService {
   public handleParticipationBackgroundSelected(files: FileList) {
     const reader = new FileReader();
     reader.readAsDataURL(files.item(0));
-    reader.onloadend = (e) => {
+    reader.onloadend = (_e) => {
       this.participationBackground = reader.result as string;
     };
   }
@@ -427,10 +428,10 @@ export class PrintService {
       style: 'tableOverview',
       table: {
         headerRows: 1,
-        paddingLeft: function (i, node) { return 0; },
-        paddingRight: function (i, node) { return 0; },
-        paddingTop: function (i, node) { return 2; },
-        paddingBottom: function (i, node) { return 2; },
+        paddingLeft: function (_i, _node) { return 0; },
+        paddingRight: function (_i, _node) { return 0; },
+        paddingTop: function (_i, _node) { return 2; },
+        paddingBottom: function (_i, _node) { return 2; },
         body: []
       },
       layout: 'lightHorizontalLines',

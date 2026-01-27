@@ -87,7 +87,7 @@ export class AppComponent {
     this.loadWcif(this.competitionId);
   }
 
-  private loadWcif(competitionId: string) {
+  private loadWcif(_competitionId: string) {
     this.loading = true;
     this.apiService.getWcif(this.competitionId).subscribe(wcif => {
       this.loading = false;
@@ -206,7 +206,7 @@ export class AppComponent {
     return this.events.filter(e => e['printCertificate']).length === 0;
   }
 
-  toggleEventSelection(event: any, clickEvent: Event): void {
+  toggleEventSelection(event: any, _clickEvent: Event): void {
     // Toggle the checkbox state
     event.printCertificate = !event.printCertificate;
   }
