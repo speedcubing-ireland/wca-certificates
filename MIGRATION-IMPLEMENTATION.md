@@ -28,7 +28,7 @@
 ### Node.js Configuration
 - **Required Node version**: 20 (installed via nvm)
 - **Switch to Node 20**: `source ~/.nvm/nvm.sh && nvm use 20`
-- **OpenSSL workaround** (needed until Angular 15+): `NODE_OPTIONS=--openssl-legacy-provider`
+- **Note**: Angular 17+ requires Node 18.13+; OpenSSL workaround no longer needed after Angular 15
 
 ### Project Structure
 ```
@@ -49,19 +49,41 @@ src/
 ├── polyfills.ts              # core-js removed
 ```
 
-### Key Dependencies
-| Package | Current | Notes |
+### Key Dependencies (Current - Angular 17)
+| Package | Version | Notes |
 |---------|---------|-------|
-| @angular/core | 11.2.14 | Target: 19.x |
-| @angular/material | 10.2.7 | Must update with Angular |
-| @angular/cdk | 10.2.7 | Must update with Angular |
-| rxjs | 6.6.7 | Update to 7.x after Angular 13 |
-| zone.js | 0.10.3 | Update after Angular migration |
-| typescript | 4.0.8 | Will update with Angular |
+| @angular/core | 17.3.12 | Target: 19.x |
+| @angular/material | 17.3.10 | MDC-based components |
+| @angular/cdk | 17.3.10 | Updated with Material |
+| rxjs | 6.6.7 | Update to 7.x pending |
+| zone.js | 0.14.10 | Updated with Angular |
+| typescript | 5.4.5 | Updated with Angular |
 
-### Commits Made
-1. `9214190` - Phase 0: Set up Cypress E2E testing framework
-2. `41131f8` - Phase 1: Pre-migration cleanup
+---
+
+## Migration Notes & Fixes Applied
+
+### Angular 15 - MDC Component Migration
+Angular Material 15 switched to MDC-based components with new CSS class names:
+- **CSS updates**: Added support for both legacy and MDC class names
+  - `.mat-tab-label` → `.mat-mdc-tab`
+  - `.mat-tab-group` → `.mat-mdc-tab-group`
+  - Updated `src/app/app.component.css` and `src/styles.css`
+- **Cypress tests**: Updated selectors from `.mat-tab-label` to `.mat-mdc-tab`
+
+### Angular 17 - Dev Server Configuration
+- **Issue**: Webpack dev server overlay blocked Cypress clicks during E2E tests
+- **Fix**: Disabled HMR and liveReload in `angular.json` serve options:
+  ```json
+  "serve": {
+    "options": {
+      "hmr": false,
+      "liveReload": false
+    }
+  }
+  ```
+- **Node.js**: Updated requirement from Node 16 to Node 20 (Angular 17 requires 18.13+)
+- **GitHub Actions**: Updated workflow to use Node 20
 
 ---
 
