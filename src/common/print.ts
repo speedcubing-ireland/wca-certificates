@@ -1,5 +1,4 @@
 import {Injectable} from '@angular/core';
-import { Location } from '@angular/common';
 import {saveAs} from 'file-saver';
 import {Certificate} from './certificate';
 import {Event} from '@wca/helpers/lib/models/event';
@@ -7,11 +6,12 @@ import {Result} from '@wca/helpers/lib/models/result';
 import {formatCentiseconds} from '@wca/helpers/lib/helpers/time';
 import {decodeMultiResult, formatMultiResult, isDnf} from '@wca/helpers/lib/helpers/result';
 import {TranslationHelper} from './translation';
-import {getEventName, Person} from '@wca/helpers';
+import {getEventName, Person, EventId} from '@wca/helpers';
 import {Helpers} from './helpers';
 import * as JSZip from 'jszip';
+import {WCIF, PdfDocument, PdfMakeStatic} from './types';
 
-declare const pdfMake: any;
+declare const pdfMake: PdfMakeStatic;
 
 @Injectable({
   providedIn: 'root'
@@ -32,10 +32,10 @@ export class PrintService {
   public podiumCertificateStyleJson = '';
   public participationCertificateJson = '';
 
-  constructor(private location: Location) {
+  constructor() {
     const isLocal = window.location.hostname === 'localhost';
     const baseUrl = isLocal ? 'http://localhost:4200/' : 'https://simonkellly.github.io/wca-certificates/';
-    
+
     pdfMake.fonts = {
       barriecito: {
         normal: `${baseUrl}fonts/Barriecito-Regular.ttf`,
@@ -62,11 +62,11 @@ export class PrintService {
     this.participationCertificateJson = TranslationHelper.getParticipationTemplate(this.participationLanguage);
   }
 
-  public getEventName(eventId) {
-    return getEventName(eventId).replace(' Cube', '');
+  public getEventName(eventId: EventId | string) {
+    return getEventName(eventId as EventId).replace(' Cube', '');
   }
 
-  private getNewCertificate(wcif: any, eventId: string, format: string, result: Result): Certificate {
+  private getNewCertificate(wcif: WCIF, eventId: string, format: string, result: Result): Certificate {
     const certificate: Certificate = new Certificate();
     certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', this.language);
     certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', this.language);
@@ -81,7 +81,7 @@ export class PrintService {
     return certificate;
   }
 
-  private getEmptyCertificate(wcif: any): Certificate {
+  private getEmptyCertificate(wcif: WCIF): Certificate {
     const certificate: Certificate = new Certificate();
     certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', this.language);
     certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', this.language);
@@ -123,7 +123,7 @@ export class PrintService {
     return mean.toString().substring(0, 2) + '.' + mean.toString().substring(2);
   }
 
-  private getPersonsWithRole(wcif: any, role: string, language: string): string {
+  private getPersonsWithRole(wcif: WCIF, role: string, language: string): string {
     const persons = wcif.persons.filter(p => p.roles.includes(role));
     persons.sort((a, b) => a.name.localeCompare(b.name));
     if (persons.length === 1) {
@@ -180,14 +180,14 @@ export class PrintService {
       : (name).replace(new RegExp(' \\(.+\\)'), '');
   }
 
-  public printCertificatesAsPdf(wcif: any, events: string[]) {
+  public printCertificatesAsPdf(wcif: WCIF, events: string[]) {
     const certificates: Certificate[] = this.getCertificates(events, wcif);
     if (certificates.length > 0) {
       this.downloadAsPdf(certificates, wcif);
     }
   }
 
-  private downloadAsPdf(certificates: Certificate[], wcif: any) {
+  private downloadAsPdf(certificates: Certificate[], wcif: WCIF) {
     const document = this.getDocument(this.pageOrientation, this.background);
     certificates.forEach(value => {
       document.content.push(this.getOneCertificateContent(value));
@@ -196,14 +196,14 @@ export class PrintService {
     pdfMake.createPdf(document).download('Certificates ' + wcif.name + '.pdf');
   }
 
-  public printCertificatesAsZip(wcif: any, events: string[]) {
+  public printCertificatesAsZip(wcif: WCIF, events: string[]) {
     const certificates: Certificate[] = this.getCertificates(events, wcif);
     if (certificates.length > 0) {
       this.downloadAsZip(certificates, wcif);
     }
   }
 
-  public printCertificatesAsPreview(wcif: any, events: string[]) {
+  public printCertificatesAsPreview(wcif: WCIF, events: string[]) {
     const certificates: Certificate[] = this.getCertificates(events, wcif);
     if (certificates.length > 0) {
       const document = this.getDocument(this.pageOrientation, this.background);
@@ -215,7 +215,7 @@ export class PrintService {
     }
   }
 
-  private downloadAsZip(certificates: Certificate[], wcif: any) {
+  private downloadAsZip(certificates: Certificate[], wcif: WCIF) {
     const zip = new JSZip();
     const zipFolder = zip.folder('examples');
     let counter = 0;
@@ -236,16 +236,16 @@ export class PrintService {
     });
   }
 
-  private getCertificates(events: string[], wcif: any): Certificate[] {
+  private getCertificates(events: string[], wcif: WCIF): Certificate[] {
     const revEvents = [...events].reverse();
     const certificates: Certificate[] = [];
-    for (let i = 0; i < revEvents.length; i++) {
-      const event: Event = wcif.events.filter(e => e.id === revEvents[i])[0];
+    for (const eventId of revEvents) {
+      const event: Event = wcif.events.filter(e => e.id === eventId)[0];
       const podiumPlaces = event['podiumPlaces'];
       const format = event.rounds[event.rounds.length - 1].format;
 
-      for (let p = 0; p < podiumPlaces.length; p++) {
-        certificates.push(this.getNewCertificate(wcif, revEvents[i], format, podiumPlaces[p]));
+      for (const podiumPlace of podiumPlaces) {
+        certificates.push(this.getNewCertificate(wcif, eventId, format, podiumPlace));
       }
     }
     if (certificates.length === 0) {
@@ -254,7 +254,7 @@ export class PrintService {
     return certificates;
   }
 
-  public printEmptyCertificate(wcif: any) {
+  public printEmptyCertificate(wcif: WCIF) {
     const document = this.getDocument(this.pageOrientation, this.background);
     document.content.push(this.getOneCertificateContent(this.getEmptyCertificate(wcif)));
     this.removeLastPageBreak(document);
@@ -285,11 +285,11 @@ export class PrintService {
     this.participationBackground = null;
   }
 
-  private removeLastPageBreak(document: any): void {
+  private removeLastPageBreak(document: PdfDocument): void {
     document.content[document.content.length - 1].pageBreak = '';
   }
 
-  private getDocument(orientation: string, background: string): any {
+  private getDocument(orientation: string, background: string | null): PdfDocument {
     const document = {
       pageOrientation: orientation,
       content: [],
@@ -307,7 +307,7 @@ export class PrintService {
       // append each style to the document
       const styles = JSON.parse(this.podiumCertificateStyleJson);
       for (const key in styles) {
-        if (styles.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(styles, key)) {
           document.defaultStyle[key] = styles[key];
         }
       }
@@ -360,7 +360,7 @@ export class PrintService {
     }
   }
 
-  printParticipationCertificatesAsPdf(wcif: any, personsWithAResult: Person[]) {
+  printParticipationCertificatesAsPdf(wcif: WCIF, personsWithAResult: Person[]) {
     const document = this.getDocument(this.participationPageOrientation, this.participationBackground);
     document.defaultStyle.fontSize = 14;
     Helpers.sortCompetitorsByName(personsWithAResult);
@@ -374,7 +374,7 @@ export class PrintService {
     pdfMake.createPdf(document).download('Participation certificates ' + wcif.name + '.pdf');
   }
 
-  printParticipationCertificatesAsZip(wcif: any, personsWithAResult: Person[]) {
+  printParticipationCertificatesAsZip(wcif: WCIF, personsWithAResult: Person[]) {
     const zip = new JSZip();
     const zipFolder = zip.folder('examples');
     let counter = 0;
@@ -395,7 +395,7 @@ export class PrintService {
     });
   }
 
-  private getParticipationCertificateDocumentFor(certificate: Certificate, p: Person, wcif: any): any {
+  private getParticipationCertificateDocumentFor(certificate: Certificate, p: Person, wcif: WCIF): PdfDocument {
     const document = this.getDocument(this.participationPageOrientation, this.participationBackground);
     document.defaultStyle.fontSize = 14;
     document.content.push(this.getOneParticipationCertificateFor(certificate));
@@ -413,7 +413,7 @@ export class PrintService {
     };
   }
 
-  private getParticipationCertificate(wcif: any, p: Person) {
+  private getParticipationCertificate(wcif: WCIF, p: Person) {
     const certificate = new Certificate();
     certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', this.participationLanguage);
     certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', this.participationLanguage);
@@ -422,7 +422,7 @@ export class PrintService {
     return certificate;
   }
 
-  private getResultsTableFor(p: Person, wcif: any) {
+  private getResultsTableFor(p: Person, wcif: WCIF) {
     const table = {
       width: 'auto',
       style: 'tableOverview',
@@ -460,7 +460,7 @@ export class PrintService {
     };
   }
 
-  private removeLastPageBreakFromParticipationCertificates(document: any): void {
+  private removeLastPageBreakFromParticipationCertificates(document: PdfDocument): void {
     document.content[document.content.length - 1].columns[1].pageBreak = '';
   }
 
