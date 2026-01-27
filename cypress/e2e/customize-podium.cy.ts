@@ -24,7 +24,7 @@ describe('Customize Podium Tab', () => {
     cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
 
     // Navigate to Customize Podium tab
-    cy.contains('.mat-tab-label', 'Customize Podium').click();
+    cy.contains('.mat-mdc-tab', 'Customize Podium').click();
   });
 
   it('should display language dropdown with all 7 languages', () => {

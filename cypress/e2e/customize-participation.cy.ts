@@ -24,7 +24,7 @@ describe('Customize Participation Tab', () => {
     cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
 
     // Navigate to Customize Participation tab
-    cy.contains('.mat-tab-label', 'Customize Participation').click();
+    cy.contains('.mat-mdc-tab', 'Customize Participation').click();
   });
 
   it('should display language dropdown', () => {

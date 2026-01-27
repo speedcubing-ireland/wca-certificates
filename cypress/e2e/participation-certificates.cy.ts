@@ -27,7 +27,7 @@ describe('Participation Certificates Tab', () => {
     cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
 
     // Navigate to Participation Certificates tab
-    cy.contains('.mat-tab-label', 'Participation Certificates').click();
+    cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
   });
 
   it('should display participant stats', () => {
@@ -124,7 +124,7 @@ describe('Participation Certificates Tab - No Results', () => {
     cy.wait('@getWcif');
     cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
 
-    cy.contains('.mat-tab-label', 'Participation Certificates').click();
+    cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
   });
 
   it('should disable download buttons when no results', () => {

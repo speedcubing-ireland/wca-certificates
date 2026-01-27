@@ -16,10 +16,12 @@ html, body {
 }
 
 /* Angular Material overrides */
+.mat-mdc-tab-group,
 .mat-tab-group {
   font-family: 'Roboto Mono', 'SF Mono', 'Monaco', 'Consolas', monospace !important;
 }
 
+.mat-mdc-tab,
 .mat-tab-label {
   font-family: 'Roboto Mono', 'SF Mono', 'Monaco', 'Consolas', monospace !important;
 }

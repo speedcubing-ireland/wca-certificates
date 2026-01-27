@@ -27,42 +27,42 @@ describe('Navigation & Error States', () => {
     });
 
     it('should navigate to Podium Certificates tab', () => {
-      cy.contains('.mat-tab-label', 'Podium Certificates').click();
+      cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
       cy.get('.events-table').should('be.visible');
     });
 
     it('should navigate to Customize Podium tab', () => {
-      cy.contains('.mat-tab-label', 'Customize Podium').click();
+      cy.contains('.mat-mdc-tab', 'Customize Podium').click();
       cy.contains('Language').should('be.visible');
       cy.contains('Certificate Template').should('be.visible');
     });
 
     it('should navigate to Participation Certificates tab', () => {
-      cy.contains('.mat-tab-label', 'Participation Certificates').click();
+      cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
       cy.contains('Total Competitors').should('be.visible');
     });
 
     it('should navigate to Customize Participation tab', () => {
-      cy.contains('.mat-tab-label', 'Customize Participation').click();
+      cy.contains('.mat-mdc-tab', 'Customize Participation').click();
       cy.contains('Language').should('be.visible');
     });
 
     it('should allow navigating between all tabs', () => {
       // Navigate through all tabs
-      cy.contains('.mat-tab-label', 'Podium Certificates').click();
+      cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
       cy.get('.events-table').should('be.visible');
 
-      cy.contains('.mat-tab-label', 'Customize Podium').click();
+      cy.contains('.mat-mdc-tab', 'Customize Podium').click();
       cy.contains('Certificate Template').should('be.visible');
 
-      cy.contains('.mat-tab-label', 'Participation Certificates').click();
+      cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
       cy.contains('Total Competitors').should('be.visible');
 
-      cy.contains('.mat-tab-label', 'Customize Participation').click();
+      cy.contains('.mat-mdc-tab', 'Customize Participation').click();
       cy.get('textarea').should('be.visible');
 
       // Go back to first tab
-      cy.contains('.mat-tab-label', 'Podium Certificates').click();
+      cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
       cy.get('.events-table').should('be.visible');
     });
   });
