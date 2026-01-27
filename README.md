@@ -31,7 +31,7 @@ Originally forked from https://github.com/Goosly/wca-certificates
 
 ## Technologies
 
-- **Angular** 17.3.12
+- **Angular** 19.2.18
 - **Angular Material** for UI components
 - **PDFMake** for client-side PDF generation
 - **JSZip** for ZIP file creation
