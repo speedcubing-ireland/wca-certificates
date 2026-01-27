@@ -40,8 +40,8 @@ Originally forked from https://github.com/Goosly/wca-certificates
 ## Development
 
 ### Prerequisites
-- Node.js 20.x (Angular 17 requires Node 18.13+)
-- Angular CLI 17.x
+- Node.js 20.x or 22.x (Angular 19 requires Node 18.19.1+)
+- Angular CLI 19.x
 
 ### Setting up Node.js with nvm
 
@@ -58,19 +58,17 @@ nvm use 20
 node --version  # Should show v20.x.x
 ```
 
-### Installing Angular CLI 17
+### Installing Angular CLI 19
 
 ```bash
-npm install -g @angular/cli@17
+npm install -g @angular/cli@19
 ```
 
 ### Installation
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
-
-Note: The `--legacy-peer-deps` flag is required due to peer dependency conflicts between Angular 11 and newer testing packages.
 
 ### Running Locally
 
@@ -79,6 +77,12 @@ ng serve
 ```
 
 Navigate to http://localhost:4200/
+
+### Linting
+
+```bash
+npm run lint
+```
 
 ### Testing
 
@@ -89,7 +93,7 @@ ng test
 
 ### End-to-End Testing (Cypress)
 
-The project uses [Cypress](https://www.cypress.io/) for end-to-end testing. **Node 16 is required** for E2E tests.
+The project uses [Cypress](https://www.cypress.io/) for end-to-end testing.
 
 ```bash
 # Run E2E tests (starts server automatically and runs tests headlessly)
@@ -114,13 +118,19 @@ The test suite covers:
 
 ## Build & Deploy
 
-To build and deploy to GitHub Pages:
+To build for production:
 
 ```bash
-sh build-prod.sh
+npm run build-prod
 ```
 
-This builds the production app and pushes the `dist` directory to the `gh-pages` branch, triggering a GitHub Pages deployment.
+To deploy to GitHub Pages:
+
+```bash
+npm run deploy
+```
+
+This pushes the `dist/wca-certificates` directory to the `gh-pages` branch, triggering a GitHub Pages deployment.
 
 ## Data Sources
 
