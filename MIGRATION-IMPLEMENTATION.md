@@ -16,7 +16,7 @@
 |---------|--------|
 | 11 → 12 | ✅ Complete |
 | 12 → 13 | ✅ Complete |
-| 13 → 14 | ⏳ Pending |
+| 13 → 14 | ✅ Complete |
 | 14 → 15 | ⏳ Pending |
 | 15 → 16 | ⏳ Pending |
 | 16 → 17 | ⏳ Pending |
