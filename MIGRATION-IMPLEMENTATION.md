@@ -9,6 +9,7 @@
 | Phase 2 | ✅ Complete | Sequential Angular updates (11→19) |
 | Phase 3 | ✅ Complete | Replace TSLint with ESLint |
 | Phase 4 | ⏳ Pending | Post-migration updates |
+| Phase 5 | ⏳ Pending | Codebase modernization (strict ESLint) |
 
 ### Angular Version Progress
 
@@ -260,10 +261,270 @@ npm install rxjs@7 --save
 npm install zone.js@latest --save
 ```
 
-### Optional Modernization
-- Convert `*ngIf`/`*ngFor` to `@if`/`@for` (v17+ syntax)
-- Consider standalone components
-- Remove jQuery dependency if possible
+---
+
+## Phase 5: Codebase Modernization (Strict ESLint)
+
+This phase modernizes the codebase to enable strict ESLint rules that are currently relaxed for legacy code compatibility.
+
+### 5.1 Replace `any` Types with Proper Types
+
+**ESLint rule**: `@typescript-eslint/no-explicit-any` (currently: warn → target: error)
+
+**Files to update**:
+- `src/app/app.component.ts` (~8 instances)
+- `src/common/api.ts` (~15 instances)
+- `src/common/print.ts` (~21 instances)
+
+**Common patterns to fix**:
+```typescript
+// Before
+competitionsToChooseFrom: Array<any> = null;
+wcif: any;
+
+// After - Create proper interfaces
+interface Competition {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+}
+
+interface WCIF {
+  id: string;
+  name: string;
+  persons: Person[];
+  events: Event[];
+}
+
+competitionsToChooseFrom: Competition[] | null = null;
+wcif: WCIF | null = null;
+```
+
+**Tasks**:
+- [ ] Create `src/common/interfaces/competition.ts` with WCA API response types
+- [ ] Create `src/common/interfaces/wcif.ts` with WCIF types (or use @wca/helpers types)
+- [ ] Update `ApiService` with proper return types
+- [ ] Update `AppComponent` with proper property types
+- [ ] Update `PrintService` with proper parameter/return types
+
+### 5.2 Convert to Standalone Components
+
+**ESLint rule**: `@angular-eslint/prefer-standalone` (currently: off → target: error)
+
+**Files to update**:
+- `src/app/app.component.ts`
+- `src/app/app.module.ts` (will be removed)
+- `src/main.ts`
+
+**Steps**:
+```typescript
+// Before: app.component.ts
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  standalone: false
+})
+
+// After: app.component.ts
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatTabsModule,
+    MatCheckboxModule,
+    // ... other Material modules
+  ]
+})
+```
+
+```typescript
+// Before: main.ts
+import { AppModule } from './app/app.module';
+platformBrowserDynamic().bootstrapModule(AppModule);
+
+// After: main.ts
+import { AppComponent } from './app/app.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideHttpClient(),
+    provideAnimationsAsync()
+  ]
+});
+```
+
+**Tasks**:
+- [ ] Add all required imports to `AppComponent`
+- [ ] Update `main.ts` to use `bootstrapApplication()`
+- [ ] Remove `app.module.ts`
+- [ ] Update tests if needed
+
+### 5.3 Use `inject()` Function
+
+**ESLint rule**: `@angular-eslint/prefer-inject` (currently: off → target: error)
+
+**Files to update**:
+- `src/app/app.component.ts`
+- `src/common/api.ts`
+- `src/common/print.ts`
+
+**Pattern**:
+```typescript
+// Before: Constructor injection
+@Component({...})
+export class AppComponent {
+  constructor(
+    public apiService: ApiService,
+    public printService: PrintService
+  ) {}
+}
+
+// After: inject() function
+@Component({...})
+export class AppComponent {
+  apiService = inject(ApiService);
+  printService = inject(PrintService);
+}
+```
+
+**Tasks**:
+- [ ] Convert `AppComponent` constructor injection to `inject()`
+- [ ] Convert `ApiService` constructor injection to `inject()`
+- [ ] Convert `PrintService` constructor injection to `inject()`
+
+### 5.4 Convert to Modern Control Flow
+
+**ESLint rule**: `@angular-eslint/template/prefer-control-flow` (currently: off → target: error)
+
+**File to update**: `src/app/app.component.html`
+
+**Patterns**:
+```html
+<!-- Before: *ngIf -->
+<div *ngIf="loading">Loading...</div>
+<div *ngIf="error">{{ error }}</div>
+<div *ngIf="wcif; else noCompetition">...</div>
+
+<!-- After: @if -->
+@if (loading) {
+  <div>Loading...</div>
+}
+@if (error) {
+  <div>{{ error }}</div>
+}
+@if (wcif) {
+  ...
+} @else {
+  ...
+}
+```
+
+```html
+<!-- Before: *ngFor -->
+<tr *ngFor="let event of events">...</tr>
+<option *ngFor="let comp of competitions" [value]="comp.id">
+
+<!-- After: @for -->
+@for (event of events; track event.id) {
+  <tr>...</tr>
+}
+@for (comp of competitions; track comp.id) {
+  <option [value]="comp.id">
+}
+```
+
+**Tasks**:
+- [ ] Convert all `*ngIf` to `@if`
+- [ ] Convert all `*ngFor` to `@for` (with track expression)
+- [ ] Remove `CommonModule` import (no longer needed for control flow)
+
+### 5.5 Fix Template Accessibility
+
+**ESLint rule**: `@angular-eslint/template/label-has-associated-control` (currently: warn → target: error)
+
+**File to update**: `src/app/app.component.html` (~13 warnings)
+
+**Pattern**:
+```html
+<!-- Before: Label without association -->
+<label>Language:</label>
+<select [(ngModel)]="language">...</select>
+
+<!-- After: Label with for/id association -->
+<label for="language-select">Language:</label>
+<select id="language-select" [(ngModel)]="language">...</select>
+
+<!-- Or: Wrap input in label -->
+<label>
+  Language:
+  <select [(ngModel)]="language">...</select>
+</label>
+```
+
+**Tasks**:
+- [ ] Add `id` attributes to all form controls
+- [ ] Add corresponding `for` attributes to labels
+- [ ] Verify screen reader compatibility
+
+### 5.6 Fix Object Prototype Builtins
+
+**ESLint rule**: `no-prototype-builtins` (currently: warn → target: error)
+
+**File to update**: `src/common/print.ts` (line 310)
+
+**Pattern**:
+```typescript
+// Before
+if (styles.hasOwnProperty(key)) {
+
+// After
+if (Object.hasOwn(styles, key)) {
+// Or
+if (Object.prototype.hasOwnProperty.call(styles, key)) {
+```
+
+### 5.7 Final ESLint Configuration
+
+After completing all tasks, update `eslint.config.js`:
+
+```javascript
+rules: {
+  // Remove or change these relaxed rules:
+  "@angular-eslint/prefer-standalone": "error",      // was: off
+  "@angular-eslint/prefer-inject": "error",          // was: off
+  "@typescript-eslint/no-explicit-any": "error",     // was: warn
+  "@typescript-eslint/array-type": "error",          // was: off
+  "@typescript-eslint/prefer-for-of": "error",       // was: off
+  "no-prototype-builtins": "error",                  // was: warn
+
+  // In template rules:
+  "@angular-eslint/template/prefer-control-flow": "error",           // was: off
+  "@angular-eslint/template/label-has-associated-control": "error",  // was: warn
+}
+```
+
+### Phase 5 Verification
+
+After completing all modernization:
+
+```bash
+# Run ESLint - should pass with 0 errors and 0 warnings
+npx ng lint
+
+# Run E2E tests
+npm run e2e
+
+# Build production
+npx ng build --configuration=production
+```
 
 ---
 
