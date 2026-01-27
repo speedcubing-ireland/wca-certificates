@@ -31,7 +31,7 @@ Originally forked from https://github.com/Goosly/wca-certificates
 
 ## Technologies
 
-- **Angular** 11.2.14
+- **Angular** 17.3.12
 - **Angular Material** for UI components
 - **PDFMake** for client-side PDF generation
 - **JSZip** for ZIP file creation
@@ -40,28 +40,28 @@ Originally forked from https://github.com/Goosly/wca-certificates
 ## Development
 
 ### Prerequisites
-- Node.js 16.x (required for Cypress E2E tests; also works with Angular 11)
-- Angular CLI 11.x
+- Node.js 20.x (Angular 17 requires Node 18.13+)
+- Angular CLI 17.x
 
 ### Setting up Node.js with nvm
 
-If you have a different version of Node.js installed, use [nvm](https://github.com/nvm-sh/nvm) to install and switch to Node 16:
+If you have a different version of Node.js installed, use [nvm](https://github.com/nvm-sh/nvm) to install and switch to Node 20:
 
 ```bash
-# Install Node 16
-nvm install 16
+# Install Node 20
+nvm install 20
 
-# Use Node 16 in current shell
-nvm use 16
+# Use Node 20 in current shell
+nvm use 20
 
 # Verify version
-node --version  # Should show v16.x.x
+node --version  # Should show v20.x.x
 ```
 
-### Installing Angular CLI 11
+### Installing Angular CLI 17
 
 ```bash
-npm install -g @angular/cli@11
+npm install -g @angular/cli@17
 ```
 
 ### Installation
