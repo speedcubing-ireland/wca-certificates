@@ -15,7 +15,7 @@
 | Version | Status |
 |---------|--------|
 | 11 → 12 | ✅ Complete |
-| 12 → 13 | ⏳ Pending |
+| 12 → 13 | ✅ Complete |
 | 13 → 14 | ⏳ Pending |
 | 14 → 15 | ⏳ Pending |
 | 15 → 16 | ⏳ Pending |
