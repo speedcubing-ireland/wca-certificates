@@ -1,15 +1,17 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {Injectable, inject} from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {Observable, forkJoin, of} from 'rxjs';
 import {map, catchError} from 'rxjs/operators';
 import {environment} from '../environments/environment';
 import {LogglyService} from '../loggly/loggly.service';
+import {Competition, RawCompetition, CompetitionsApiResponse, WCIF} from './types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
 
+  private httpClient = inject(HttpClient);
   private logglyService: LogglyService;
   private headerParams: HttpHeaders;
 
@@ -25,7 +27,7 @@ export class ApiService {
     'County Tyrone'
   ];
 
-  constructor(private httpClient: HttpClient) {
+  constructor() {
     this.headerParams = new HttpHeaders();
     this.headerParams = this.headerParams.set('Content-Type', 'application/json');
 
@@ -45,7 +47,7 @@ export class ApiService {
     return this.NORTHERN_IRELAND_COUNTIES.some(county => city.includes(county));
   }
 
-  private mapToCompetitionFormat(data: any): any {
+  private mapToCompetitionFormat(data: RawCompetition): Competition {
     return {
       id: data.id,
       name: data.name,
@@ -56,63 +58,59 @@ export class ApiService {
     };
   }
 
-  getIrishCompetitions(): Observable<any> {
+  getIrishCompetitions(): Observable<Competition[]> {
     const irishUrl = `${this.UNOFFICIAL_API_BASE}/competitions/IE.json`;
     const ukUrl = `${this.UNOFFICIAL_API_BASE}/competitions/GB.json`;
 
-    interface ApiResponse {
-      items?: any[];
-    }
-
     return forkJoin({
-      irish: this.httpClient.get<ApiResponse>(irishUrl).pipe(
-        catchError(() => of<ApiResponse>({items: []}))
+      irish: this.httpClient.get<CompetitionsApiResponse>(irishUrl).pipe(
+        catchError(() => of<CompetitionsApiResponse>({items: []}))
       ),
-      uk: this.httpClient.get<ApiResponse>(ukUrl).pipe(
-        catchError(() => of<ApiResponse>({items: []}))
+      uk: this.httpClient.get<CompetitionsApiResponse>(ukUrl).pipe(
+        catchError(() => of<CompetitionsApiResponse>({items: []}))
       )
     }).pipe(
       map(({irish, uk}) => {
-        const irishComps = ((irish as ApiResponse).items || []).map((comp: any) => this.mapToCompetitionFormat(comp));
-        const niComps = ((uk as ApiResponse).items || [])
-          .filter((comp: any) => this.isNorthernIreland(comp.city))
-          .map((comp: any) => this.mapToCompetitionFormat(comp));
-        
+        const irishComps = (irish.items || []).map((comp) => this.mapToCompetitionFormat(comp));
+        const niComps = (uk.items || [])
+          .filter((comp) => this.isNorthernIreland(comp.city))
+          .map((comp) => this.mapToCompetitionFormat(comp));
+
         const allComps = [...irishComps, ...niComps];
-        
+
         // Filter by date range (similar to original logic)
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - (environment.testMode ? this.ONE_YEAR : this.EIGHT_WEEKS));
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + (environment.testMode ? this.ONE_YEAR : this.EIGHT_WEEKS));
-        
-        return allComps.filter((comp: any) => {
+
+        return allComps.filter((comp) => {
           const compEndDate = new Date(comp.end_date);
           return compEndDate >= startDate && new Date(comp.start_date) <= endDate;
-        }).sort((a: any, b: any) => {
+        }).sort((a, b) => {
           return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
         });
       })
     );
   }
 
-  getWcif(competitionId): Observable<any> {
-    return this.httpClient.get(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif/public`);
+  getWcif(competitionId: string): Observable<WCIF> {
+    return this.httpClient.get<WCIF>(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif/public`);
   }
 
-  logUserClicksDownloadCertificatesAsPdf(competitionId: any) {
+  logUserClicksDownloadCertificatesAsPdf(competitionId: string) {
     this.logMessage(competitionId + ' - Certificates downloaded as pdf');
   }
 
-  logUserClicksDownloadCertificatesAsZip(competitionId: any) {
+  logUserClicksDownloadCertificatesAsZip(competitionId: string) {
     this.logMessage(competitionId + ' - Certificates downloaded as zip');
   }
 
-  logUserClicksDownloadParticipationCertificatesAsPdf(competitionId: any) {
+  logUserClicksDownloadParticipationCertificatesAsPdf(competitionId: string) {
     this.logMessage(competitionId + ' - Participation certificates downloaded as pdf');
   }
 
-  logUserClicksDownloadParticipationCertificatesAsZip(competitionId: any) {
+  logUserClicksDownloadParticipationCertificatesAsZip(competitionId: string) {
     this.logMessage(competitionId + ' - Participation certificates downloaded as zip');
   }
 

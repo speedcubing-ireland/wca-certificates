@@ -1,4 +1,7 @@
-import {Component, ViewEncapsulation} from '@angular/core';
+import {Component, ViewEncapsulation, inject} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {MatTabsModule} from '@angular/material/tabs';
 import {ApiService} from '../common/api';
 import {PrintService} from '../common/print';
 import {Event} from '@wca/helpers/lib/models/event';
@@ -6,33 +9,37 @@ import {Result} from '@wca/helpers/lib/models/result';
 import {Person} from '@wca/helpers';
 import {Helpers} from '../common/helpers';
 import { environment } from '../environments/environment';
+import { Competition, WCIF } from '../common/types';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: [ './app.component.css' ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [CommonModule, FormsModule, MatTabsModule]
 })
 export class AppComponent {
   state: 'PRINT' | 'REFRESHING' = 'PRINT';
 
   // Info about competitions managed by user
-  competitionsToChooseFrom: Array<any> = null;
-  inProgressCompetitions: Array<any> = [];
-  pastCompetitions: Array<any> = [];
-  futureCompetitions: Array<any> = [];
+  competitionsToChooseFrom: Competition[] | null = null;
+  inProgressCompetitions: Competition[] = [];
+  pastCompetitions: Competition[] = [];
+  futureCompetitions: Competition[] = [];
   competitionId: string;
   customCompetitionId: string;
   events: Event[];
-  wcif: any;
+  wcif: WCIF | null = null;
   personsWithAResult: Person[];
   acceptedPersons: number;
   error: string;
   loading: boolean;
 
-  constructor (
-          public apiService: ApiService,
-          public printService: PrintService) {
+  apiService = inject(ApiService);
+  printService = inject(PrintService);
+
+  constructor() {
       this.handleGetCompetitions();
   }
 
@@ -86,7 +93,7 @@ export class AppComponent {
     this.loadWcif(this.competitionId);
   }
 
-  private loadWcif(competitionId: string) {
+  private loadWcif(_competitionId: string) {
     this.loading = true;
     this.apiService.getWcif(this.competitionId).subscribe(wcif => {
       this.loading = false;
@@ -113,7 +120,7 @@ export class AppComponent {
         this.wcif = null;
         this.competitionId = null;
       }
-    }, (error: any) => {
+    }, (error: { error?: { error?: string }; message?: string }) => {
       this.loading = false;
       this.error = error?.error?.error || error?.message || 'Failed to load competition data';
     });
@@ -205,9 +212,9 @@ export class AppComponent {
     return this.events.filter(e => e['printCertificate']).length === 0;
   }
 
-  toggleEventSelection(event: any, clickEvent: Event): void {
+  toggleEventSelection(wcaEvent: Event & { printCertificate?: boolean }, _clickEvent: globalThis.Event): void {
     // Toggle the checkbox state
-    event.printCertificate = !event.printCertificate;
+    wcaEvent.printCertificate = !wcaEvent.printCertificate;
   }
 
   printParticipationCertificatesAsPdf() {
@@ -225,7 +232,7 @@ export class AppComponent {
   }
 
   // Helper method to format competition date for display
-  formatCompetitionDate(comp: any): string {
+  formatCompetitionDate(comp: Competition): string {
     const startDate = new Date(comp.start_date);
     const endDate = new Date(comp.end_date);
     

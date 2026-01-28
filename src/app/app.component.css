@@ -419,12 +419,14 @@ textarea {
   font-family: 'Roboto Mono', monospace;
 }
 
-/* Tabs */
-.mat-tab-group {
+/* Tabs - Supporting both legacy and MDC-based Material components */
+.mat-tab-group,
+.mat-mdc-tab-group {
   background: transparent;
 }
 
-.mat-tab-label {
+.mat-tab-label,
+.mat-mdc-tab {
   color: var(--text-secondary) !important;
   font-weight: 500 !important;
   text-transform: uppercase !important;
@@ -432,16 +434,19 @@ textarea {
   font-size: 11px !important;
 }
 
-.mat-tab-label-active {
+.mat-tab-label-active,
+.mat-mdc-tab.mdc-tab--active {
   color: var(--accent-primary) !important;
 }
 
-.mat-ink-bar {
+.mat-ink-bar,
+.mat-mdc-tab-group .mdc-tab-indicator__content--underline {
   background-color: var(--accent-primary) !important;
   height: 2px !important;
 }
 
-.mat-tab-body-content {
+.mat-tab-body-content,
+.mat-mdc-tab-body-content {
   padding: 0 !important;
 }
 
