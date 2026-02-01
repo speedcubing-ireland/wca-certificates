@@ -165,7 +165,7 @@
                 </table>
 
                 <!-- Download Actions -->
-                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; align-items: center;">
                   <button class="btn-primary"
                           (click)="printCertificatesAsPdf()"
                           [disabled]="printDisabled()">
@@ -182,7 +182,7 @@
                     Preview
                   </button>
                   @if (printService.background && printService.backgroundForPreviewOnly) {
-                    <label for="backgroundForPreview">Background applied for preview only</label>
+                    <label for="backgroundForPreview">Background applied to preview only</label>
                   }
                 </div>
               }

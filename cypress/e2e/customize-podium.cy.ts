@@ -85,7 +85,7 @@ describe('Customize Podium Tab', () => {
 
     cy.contains('Background set', { timeout: 5000 }).should('be.visible');
     cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
-    cy.contains('Background applied for preview only').should('be.visible');
+    cy.contains('Background applied to preview only').should('be.visible');
   });
 
   it('should hide preview-only label when checkbox is unchecked', () => {
@@ -100,7 +100,7 @@ describe('Customize Podium Tab', () => {
     cy.contains('Background set', { timeout: 5000 }).should('be.visible');
     cy.get('input#backgroundForPreview').uncheck();
     cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
-    cy.contains('Background applied for preview only').should('not.exist');
+    cy.contains('Background applied to preview only').should('not.exist');
   });
 
   it('should display background status indicator', () => {
