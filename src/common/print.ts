@@ -24,6 +24,7 @@ export class PrintService {
   public participationPageOrientation: 'landscape' | 'portrait' = 'landscape';
   public showLocalNames = false;
   public background: string = null;
+  public backgroundForPreviewOnly = true;
   public participationBackground: string = null;
   public countries = '';
   public xOffset = 0;
@@ -188,7 +189,7 @@ export class PrintService {
   }
 
   private downloadAsPdf(certificates: Certificate[], wcif: WCIF) {
-    const document = this.getDocument(this.pageOrientation, this.background);
+    const document = this.getDocument(this.pageOrientation, this.background, false);
     certificates.forEach(value => {
       document.content.push(this.getOneCertificateContent(value));
     });
@@ -206,7 +207,7 @@ export class PrintService {
   public printCertificatesAsPreview(wcif: WCIF, events: string[]) {
     const certificates: Certificate[] = this.getCertificates(events, wcif);
     if (certificates.length > 0) {
-      const document = this.getDocument(this.pageOrientation, this.background);
+      const document = this.getDocument(this.pageOrientation, this.background, true);
       certificates.forEach(value => {
         document.content.push(this.getOneCertificateContent(value));
       });
@@ -220,7 +221,7 @@ export class PrintService {
     const zipFolder = zip.folder('examples');
     let counter = 0;
     certificates.forEach(certificate => {
-      const document = this.getDocument(this.pageOrientation, this.background);
+      const document = this.getDocument(this.pageOrientation, this.background, false);
       document.content.push(this.getOneCertificateContent(certificate));
       this.removeLastPageBreak(document);
       pdfMake.createPdf(document)
@@ -255,7 +256,7 @@ export class PrintService {
   }
 
   public printEmptyCertificate(wcif: WCIF) {
-    const document = this.getDocument(this.pageOrientation, this.background);
+    const document = this.getDocument(this.pageOrientation, this.background, false);
     document.content.push(this.getOneCertificateContent(this.getEmptyCertificate(wcif)));
     this.removeLastPageBreak(document);
     pdfMake.createPdf(document).download('Empty certificate ' + wcif.name + '.pdf');
@@ -267,6 +268,7 @@ export class PrintService {
     reader.onloadend = (_e) => {
       this.background = reader.result as string;
     };
+    this.backgroundForPreviewOnly = true;
   }
 
   public handleParticipationBackgroundSelected(files: FileList) {
@@ -289,7 +291,7 @@ export class PrintService {
     document.content[document.content.length - 1].pageBreak = '';
   }
 
-  private getDocument(orientation: string, background: string | null): PdfDocument {
+  private getDocument(orientation: string, background: string | null, isPreview: boolean): PdfDocument {
     const document = {
       pageOrientation: orientation,
       content: [],
@@ -312,7 +314,7 @@ export class PrintService {
         }
       }
     }
-    if (background !== null) {
+    if (background !== null && (this.backgroundForPreviewOnly === false || isPreview )) {
       document['background'] = {
         image: background,
         width: orientation === 'landscape' ? 840 : 594,
@@ -361,7 +363,7 @@ export class PrintService {
   }
 
   printParticipationCertificatesAsPdf(wcif: WCIF, personsWithAResult: Person[]) {
-    const document = this.getDocument(this.participationPageOrientation, this.participationBackground);
+    const document = this.getDocument(this.participationPageOrientation, this.participationBackground, false);
     document.defaultStyle.fontSize = 14;
     Helpers.sortCompetitorsByName(personsWithAResult);
     personsWithAResult.forEach(p => {
@@ -396,7 +398,7 @@ export class PrintService {
   }
 
   private getParticipationCertificateDocumentFor(certificate: Certificate, p: Person, wcif: WCIF): PdfDocument {
-    const document = this.getDocument(this.participationPageOrientation, this.participationBackground);
+    const document = this.getDocument(this.participationPageOrientation, this.participationBackground, false);
     document.defaultStyle.fontSize = 14;
     document.content.push(this.getOneParticipationCertificateFor(certificate));
     document.content.push(this.getResultsTableFor(p, wcif));

@@ -56,9 +56,51 @@ describe('Customize Podium Tab', () => {
     cy.get('textarea').eq(1).should('not.be.disabled');
   });
 
-  it('should have background file input with Clear button', () => {
-    cy.get('input[type="file"]').first().should('exist');
-    cy.contains('button', 'Clear').first().should('be.visible');
+  it('should show preview-only checkbox and Clear button when background is uploaded', () => {
+    // Verify file input exists
+    cy.get('input#podium-background').should('exist');
+
+    const base64Image = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+    cy.get('input#podium-background').selectFile({
+      contents: Cypress.Buffer.from(base64Image, 'base64'),
+      fileName: 'test-background.png',
+      mimeType: 'image/png'
+    }, { force: true });
+
+    cy.contains('Background set', { timeout: 5000 }).should('be.visible');
+    cy.get('input#backgroundForPreview').should('exist').and('be.checked');
+    cy.contains('label', 'For preview only').should('be.visible');
+    cy.contains('button', 'Clear').should('be.visible');
+  });
+
+  it('should show preview-only label when background is set with preview-only enabled', () => {
+    const base64Image = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+    cy.get('input#podium-background').selectFile({
+      contents: Cypress.Buffer.from(base64Image, 'base64'),
+      fileName: 'test-background.png',
+      mimeType: 'image/png'
+    }, { force: true });
+
+    cy.contains('Background set', { timeout: 5000 }).should('be.visible');
+    cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
+    cy.contains('Background applied to preview only').should('be.visible');
+  });
+
+  it('should hide preview-only label when checkbox is unchecked', () => {
+    const base64Image = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+    cy.get('input#podium-background').selectFile({
+      contents: Cypress.Buffer.from(base64Image, 'base64'),
+      fileName: 'test-background.png',
+      mimeType: 'image/png'
+    }, { force: true });
+
+    cy.contains('Background set', { timeout: 5000 }).should('be.visible');
+    cy.get('input#backgroundForPreview').uncheck();
+    cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
+    cy.contains('Background applied to preview only').should('not.exist');
   });
 
   it('should display background status indicator', () => {

@@ -165,7 +165,7 @@
                 </table>
 
                 <!-- Download Actions -->
-                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; align-items: center;">
                   <button class="btn-primary"
                           (click)="printCertificatesAsPdf()"
                           [disabled]="printDisabled()">
@@ -181,6 +181,9 @@
                           [disabled]="printDisabled()">
                     Preview
                   </button>
+                  @if (printService.background && printService.backgroundForPreviewOnly) {
+                    <label for="backgroundForPreview">Background applied to preview only</label>
+                  }
                 </div>
               }
             </div>
@@ -224,11 +227,17 @@
                 <div class="flex items-center gap-4">
                   <label for="podium-background" style="color: var(--text-secondary); min-width: 120px;">Background:</label>
                   <input id="podium-background" #backgroundFileInput type="file" (change)="printService.handleBackgroundSelected($event.target.files)"/>
-                  <button class="btn-secondary"
+                  @if (printService.background) {
+                    <label for="backgroundForPreview">For preview only</label>
+                    <input id="backgroundForPreview" 
+                                 type="checkbox"
+                                 class="event-checkbox"
+                                 [(ngModel)]="printService.backgroundForPreviewOnly"
+                                 (click)="$event.stopPropagation()">
+                    <span style="color: var(--success-color); font-size: 12px;">✓ Background set</span>
+                    <button class="btn-secondary"
                           (click)="clearBackground(backgroundFileInput)"
                           [disabled]="!printService.background">Clear</button>
-                  @if (printService.background) {
-                    <span style="color: var(--success-color); font-size: 12px;">✓ Background set</span>
                   }
                   @if (!printService.background) {
                     <span style="color: var(--text-muted); font-size: 12px;">No background</span>
