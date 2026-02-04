@@ -4,7 +4,7 @@ import {Observable, forkJoin, of} from 'rxjs';
 import {map, catchError} from 'rxjs/operators';
 import {environment} from '../environments/environment';
 import {LogglyService} from '../loggly/loggly.service';
-import {Competition, RawCompetition, CompetitionsApiResponse, WCIF} from './types';
+import {Competition, RawCompetition, CompetitionsApiResponse, WCIF, WcaApiResult} from './types';
 
 @Injectable({
   providedIn: 'root'
@@ -96,6 +96,10 @@ export class ApiService {
 
   getWcif(competitionId: string): Observable<WCIF> {
     return this.httpClient.get<WCIF>(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif/public`);
+  }
+
+  getResults(competitionId: string): Observable<WcaApiResult[]> {
+    return this.httpClient.get<WcaApiResult[]>(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/results`);
   }
 
   logUserClicksDownloadCertificatesAsPdf(competitionId: string) {
