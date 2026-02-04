@@ -10,6 +10,7 @@ import {getEventName, Person, EventId} from '@wca/helpers';
 import {Helpers} from './helpers';
 import * as JSZip from 'jszip';
 import {WCIF, PdfDocument, PdfMakeStatic} from './types';
+import {environment} from '../environments/environment';
 
 declare const pdfMake: PdfMakeStatic;
 
@@ -34,8 +35,7 @@ export class PrintService {
   public participationCertificateJson = '';
 
   constructor() {
-    const isLocal = window.location.hostname === 'localhost';
-    const baseUrl = isLocal ? 'http://localhost:4200/' : 'https://simonkellly.github.io/wca-certificates/';
+    const baseUrl = environment.appUrl;
 
     pdfMake.fonts = {
       barriecito: {

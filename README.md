@@ -84,13 +84,6 @@ Navigate to http://localhost:4200/
 npm run lint
 ```
 
-### Testing
-
-```bash
-# Unit tests
-ng test
-```
-
 ### End-to-End Testing (Cypress)
 
 The project uses [Cypress](https://www.cypress.io/) for end-to-end testing.
@@ -119,6 +112,28 @@ The test suite covers:
 ## Build & Deploy
 
 To build for production:
+
+```bash
+npm run build-prod
+```
+
+### Testing the Production Build Locally
+
+The production build can behave differently from `ng serve` due to optimizations and base-href settings. To test the bundled output locally before deploying:
+
+```bash
+# Build without the GitHub Pages base-href
+ng build -c=production
+
+# Serve locally
+npx serve dist/wca-certificates -s
+```
+
+Then open http://localhost:3000 to test the production bundle.
+
+### Deploying to GitHub Pages
+
+Before deploying, rebuild with the correct base-href:
 
 ```bash
 npm run build-prod
