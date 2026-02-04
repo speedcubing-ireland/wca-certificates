@@ -1,0 +1,68 @@
+{
+  "formatVersion": "1.0",
+  "id": "TestCompetition2024",
+  "name": "Test Competition 2024",
+  "shortName": "Test 2024",
+  "persons": [
+    {
+      "registrantId": 1,
+      "name": "John Doe",
+      "wcaId": "2015DOEJ01",
+      "countryIso2": "IE",
+      "registration": {
+        "wcaRegistrationId": 123,
+        "eventIds": ["333", "222"],
+        "status": "accepted"
+      }
+    },
+    {
+      "registrantId": 2,
+      "name": "Jane Smith",
+      "wcaId": "2016SMIJ01",
+      "countryIso2": "IE",
+      "registration": {
+        "wcaRegistrationId": 124,
+        "eventIds": ["333", "222"],
+        "status": "accepted"
+      }
+    },
+    {
+      "registrantId": 3,
+      "name": "Bob Wilson",
+      "wcaId": "2017WILB01",
+      "countryIso2": "IE",
+      "registration": {
+        "wcaRegistrationId": 125,
+        "eventIds": ["333"],
+        "status": "accepted"
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "333",
+      "rounds": [
+        {
+          "id": "333-r1",
+          "format": "a",
+          "results": []
+        }
+      ]
+    },
+    {
+      "id": "222",
+      "rounds": [
+        {
+          "id": "222-r1",
+          "format": "a",
+          "results": []
+        }
+      ]
+    }
+  ],
+  "schedule": {
+    "startDate": "2024-06-15",
+    "numberOfDays": 2,
+    "venues": []
+  }
+}
