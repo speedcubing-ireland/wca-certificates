@@ -121,4 +121,26 @@ describe('Customize Podium Tab', () => {
     cy.get('input[type="number"]').first().clear().type('10');
     cy.get('input[type="number"]').first().should('have.value', '10');
   });
+
+  it('should reset certificate template to default after editing', () => {
+    cy.get('textarea#podium-template').invoke('val').then((defaultValue) => {
+      cy.get('textarea#podium-template').clear().type('edited template');
+      cy.get('textarea#podium-template').should('have.value', 'edited template');
+
+      // Click the Reset button below the template textarea
+      cy.contains('button', 'Reset Certificate Template').click();
+      cy.get('textarea#podium-template').should('have.value', defaultValue);
+    });
+  });
+
+  it('should reset style configuration to default after editing', () => {
+    cy.get('textarea#podium-style').invoke('val').then((defaultValue) => {
+      cy.get('textarea#podium-style').clear().type('edited style');
+      cy.get('textarea#podium-style').should('have.value', 'edited style');
+
+      // Click the Reset button below the style textarea
+      cy.contains('button', 'Reset Style Configuration').click();
+      cy.get('textarea#podium-style').should('have.value', defaultValue);
+    });
+  });
 });

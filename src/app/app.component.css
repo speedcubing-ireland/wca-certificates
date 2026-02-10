@@ -426,7 +426,8 @@ textarea {
 }
 
 .mat-tab-label,
-.mat-mdc-tab {
+.mat-mdc-tab,
+.mat-mdc-tab .mdc-tab__text-label {
   color: #ffffff !important;
   font-weight: 500 !important;
   text-transform: uppercase !important;
@@ -435,7 +436,8 @@ textarea {
 }
 
 .mat-tab-label-active,
-.mat-mdc-tab.mdc-tab--active {
+.mat-mdc-tab.mdc-tab--active,
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
   color: var(--accent-primary) !important;
 }
 

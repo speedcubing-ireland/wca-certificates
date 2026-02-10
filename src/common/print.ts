@@ -27,6 +27,9 @@ export class PrintService {
   public podiumCertificateJson = '';
   public podiumCertificateStyleJson = '';
 
+  public readonly defaultPodiumCertificateJson: string;
+  public readonly defaultPodiumCertificateStyleJson: string;
+
   constructor() {
     const baseUrl = environment.appUrl;
 
@@ -47,7 +50,7 @@ export class PrintService {
       },
     }
 
-    this.podiumCertificateJson = `[\n \
+    this.defaultPodiumCertificateJson = `[\n \
 "\\n\\n\\n\\n\\n",\n \
 {"text": "certificate.event", "fontSize": "40", "bold": "true"},\n \
 "\\n",\n \
@@ -59,11 +62,22 @@ export class PrintService {
 {"text": "certificate.result", "bold": "true"},\n \
 "  certificate.resultUnit"\n \
 ]`;
+    this.podiumCertificateJson = this.defaultPodiumCertificateJson;
+
     const defaultStyle = {
       font: 'Roboto',
       otherFonts: ['barriecito', 'mono']
     }
-    this.podiumCertificateStyleJson = JSON.stringify(defaultStyle, null, 2);
+    this.defaultPodiumCertificateStyleJson = JSON.stringify(defaultStyle, null, 2);
+    this.podiumCertificateStyleJson = this.defaultPodiumCertificateStyleJson;
+  }
+
+  public resetPodiumCertificateJson(): void {
+    this.podiumCertificateJson = this.defaultPodiumCertificateJson;
+  }
+
+  public resetPodiumCertificateStyleJson(): void {
+    this.podiumCertificateStyleJson = this.defaultPodiumCertificateStyleJson;
   }
 
   public getEventName(eventId: EventId | string) {

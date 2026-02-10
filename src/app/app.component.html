@@ -193,12 +193,14 @@
                 <label for="podium-template" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Certificate Template:</label>
                 <textarea id="podium-template" [(ngModel)]="printService.podiumCertificateJson"
                           placeholder="Certificate template JSON..."></textarea>
+                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateJson()">Reset Certificate Template</button>
               </div>
 
               <div class="mb-4">
                 <label for="podium-style" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Style Configuration:</label>
                 <textarea id="podium-style" [(ngModel)]="printService.podiumCertificateStyleJson"
                           placeholder="Style configuration JSON..."></textarea>
+                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateStyleJson()">Reset Style Configuration</button>
               </div>
 
               <!-- Additional Options -->
