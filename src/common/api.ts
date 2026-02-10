@@ -3,7 +3,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {Observable, forkJoin, of} from 'rxjs';
 import {map, catchError} from 'rxjs/operators';
 import {environment} from '../environments/environment';
-import {LogglyService} from '../loggly/loggly.service';
 import {Competition, RawCompetition, CompetitionsApiResponse, WCIF, WcaApiResult} from './types';
 
 @Injectable({
@@ -12,7 +11,6 @@ import {Competition, RawCompetition, CompetitionsApiResponse, WCIF, WcaApiResult
 export class ApiService {
 
   private httpClient = inject(HttpClient);
-  private logglyService: LogglyService;
   private headerParams: HttpHeaders;
 
   private ONE_YEAR = 365;
@@ -30,17 +28,6 @@ export class ApiService {
   constructor() {
     this.headerParams = new HttpHeaders();
     this.headerParams = this.headerParams.set('Content-Type', 'application/json');
-
-    this.initLoggly();
-  }
-
-  private initLoggly() {
-    this.logglyService = new LogglyService(this.httpClient);
-    this.logglyService.push({
-      logglyKey: '3c4e81e2-b2ae-40e3-88b5-ba8e8b810586',
-      sendConsoleErrors: false,
-      tag: 'wca-certificates'
-    });
   }
 
   private isNorthernIreland(city: string): boolean {
@@ -100,26 +87,6 @@ export class ApiService {
 
   getResults(competitionId: string): Observable<WcaApiResult[]> {
     return this.httpClient.get<WcaApiResult[]>(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/results`);
-  }
-
-  logUserClicksDownloadCertificatesAsPdf(competitionId: string) {
-    this.logMessage(competitionId + ' - Certificates downloaded as pdf');
-  }
-
-  logUserClicksDownloadParticipationCertificatesAsPdf(competitionId: string) {
-    this.logMessage(competitionId + ' - Participation certificates downloaded as pdf');
-  }
-
-  private logMessage(message: string) {
-    if (! environment.testMode) {
-      setTimeout(() => {
-        try {
-          this.logglyService.push(message);
-        } catch (e) {
-          console.error(e);
-        }
-      }, 0);
-    }
   }
 
 }

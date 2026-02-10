@@ -233,7 +233,6 @@ export class AppComponent {
 
   printCertificatesAsPdf() {
     this.printService.printCertificatesAsPdf(this.wcif, this.getSelectedEvents());
-    this.apiService.logUserClicksDownloadCertificatesAsPdf(this.wcif.id);
   }
 
   printCertificatesAsPreview() {
@@ -314,7 +313,6 @@ export class AppComponent {
 
   printParticipationCertificatesAsPdf() {
     this.printService.printParticipationCertificatesAsPdf(this.wcif, this.personsWithAResult);
-    this.apiService.logUserClicksDownloadParticipationCertificatesAsPdf(this.wcif.id);
   }
 
   version() {
