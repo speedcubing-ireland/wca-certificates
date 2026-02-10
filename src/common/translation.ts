@@ -159,26 +159,6 @@ export class TranslationHelper {
     }
   }
 
-  public static getParticipationTemplate(_language: string): string {
-    return '[' + '\n' +
-      '"\\n\\n\\n",' + '\n' +
-      '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-      '", on behalf of the ",' + '\n' +
-      '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-      '", and ",' + '\n' +
-      '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-      '", on behalf of the organisation team of ",' + '\n' +
-      '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-      '", certify that",' + '\n' +
-      '"\\n\\n",' + '\n' +
-      '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-      '"\\n\\n",' + '\n' +
-      '"has participated in ",' + '\n' +
-      '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-      '", obtaining the following results:\\n\\n"' + '\n' +
-      ']';
-  }
-
   public static getAnd(language: string): string {
     switch (language) {
       case 'en':
@@ -356,60 +336,6 @@ export class TranslationHelper {
         return 'einem besten Ergebnis';
       default:
         return this.getASingle('en');
-    }
-  }
-
-  static getEvent(language: string) {
-    switch (language) {
-      case 'en':
-      case 'en-us':
-        return 'Event';
-      case 'nl':
-        return 'Event';
-      case 'ru':
-        return 'Дисциплина';
-      case 'es-mx':
-        return 'Evento';
-      case 'de-ch':
-        return 'Disziplin';
-      default:
-        return this.getEvent('en');
-    }
-  }
-
-  static getResult(language: string) {
-    switch (language) {
-      case 'en':
-      case 'en-us':
-        return 'Result';
-      case 'nl':
-        return 'Resultaat';
-      case 'ru':
-        return 'Результат';
-      case 'es-mx':
-        return 'Resultado';
-      case 'de-ch':
-        return 'Ergebnis';
-      default:
-        return this.getResult('en');
-    }
-  }
-
-  static getRanking(language: string) {
-    switch (language) {
-      case 'en':
-      case 'en-us':
-        return 'Ranking';
-      case 'nl':
-        return 'Plaats';
-      case 'ru':
-        return 'Место';
-      case 'es-mx':
-        return 'Clasificación';
-      case 'de-ch':
-        return 'Platzierung';
-      default:
-        return this.getRanking('en');
     }
   }
 

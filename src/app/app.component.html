@@ -266,50 +266,6 @@
             </div>
           </mat-tab>
 
-          <!-- PARTICIPATION CERTIFICATES TAB -->
-          <mat-tab label="Participation Certificates">
-            <div class="events-section">
-              @if (state === 'REFRESHING') {
-                <div class="status-refreshing">
-                  Refreshing competition data...
-                </div>
-              }
-
-              @if (state !== 'REFRESHING') {
-                <!-- Participation Stats -->
-                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 6px; margin-bottom: 20px;">
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                    <div>
-                      <div style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Total Competitors</div>
-                      <div style="color: var(--accent-primary); font-size: 20px; font-weight: 600;">{{ acceptedPersons }}</div>
-                    </div>
-                    <div>
-                      <div style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">With Results</div>
-                      <div style="color: var(--success-color); font-size: 20px; font-weight: 600;">{{ personsWithAResult.length }}</div>
-                    </div>
-                    <div>
-                      <div style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">No Results Yet</div>
-                      <div style="color: var(--warning-color); font-size: 20px; font-weight: 600;">{{ acceptedPersons - personsWithAResult.length }}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Download Actions -->
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                  <button class="btn-primary"
-                          (click)="printParticipationCertificatesAsPdf()"
-                          [disabled]="personsWithAResult.length === 0">
-                    Download {{ personsWithAResult.length }} Certificates (PDF)
-                  </button>
-                </div>
-
-                <div style="color: var(--text-muted); font-size: 11px; margin-top: 12px;">
-                  Note: Generation may take a few seconds depending on the number of competitors
-                </div>
-              }
-            </div>
-          </mat-tab>
-
         </mat-tab-group>
       </div>
     }

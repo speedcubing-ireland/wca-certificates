@@ -37,11 +37,6 @@ describe('Navigation & Error States', () => {
       cy.contains('Certificate Template').should('be.visible');
     });
 
-    it('should navigate to Participation Certificates tab', () => {
-      cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
-      cy.contains('Total Competitors').should('be.visible');
-    });
-
     it('should allow navigating between all tabs', () => {
       // Navigate through all tabs
       cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
@@ -49,9 +44,6 @@ describe('Navigation & Error States', () => {
 
       cy.contains('.mat-mdc-tab', 'Customize Podium').click();
       cy.contains('Certificate Template').should('be.visible');
-
-      cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
-      cy.contains('Total Competitors').should('be.visible');
 
       // Go back to first tab
       cy.contains('.mat-mdc-tab', 'Podium Certificates').click();

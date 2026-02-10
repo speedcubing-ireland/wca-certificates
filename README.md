@@ -1,6 +1,6 @@
 # WCA Certificates
 
-A web application for generating podium and participation certificates for World Cube Association (WCA) speedcubing competitions. Built primarily for competitions in Ireland and Northern Ireland.
+A web application for generating podium certificates for World Cube Association (WCA) speedcubing competitions. Built primarily for competitions in Ireland and Northern Ireland.
 
 Originally forked from https://github.com/Goosly/wca-certificates
 
@@ -14,10 +14,6 @@ Originally forked from https://github.com/Goosly/wca-certificates
 - Filter results by country (ISO 2-letter codes)
 - Handles ties in podium placement
 
-### Participation Certificates
-- Generate certificates for all competitors
-- Includes a results summary table with rankings per event
-
 ### Customization
 - Multi-language support: English (UK/US), Dutch, French, German (Switzerland), Mexican Spanish, Russian
 - Custom JSON-based certificate templates
@@ -27,7 +23,7 @@ Originally forked from https://github.com/Goosly/wca-certificates
 
 ### Export Options
 - Download as single PDF
-- Download as ZIP with individual PDF files per certificate
+- Preview in browser before printing
 
 ## Technologies
 
@@ -105,7 +101,6 @@ npm run cy:open
 The test suite covers:
 - Competition selection and loading
 - Podium certificate generation
-- Participation certificate generation
 - Certificate customization options
 - Tab navigation and error handling
 

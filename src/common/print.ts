@@ -6,8 +6,7 @@ import {Result} from '@wca/helpers/lib/models/result';
 import {formatCentiseconds} from '@wca/helpers/lib/helpers/time';
 import {decodeMultiResult, formatMultiResult, isDnf} from '@wca/helpers/lib/helpers/result';
 import {TranslationHelper} from './translation';
-import {getEventName, Person, EventId} from '@wca/helpers';
-import {Helpers} from './helpers';
+import {getEventName, EventId} from '@wca/helpers';
 import {WCIF, PdfDocument, PdfMakeStatic} from './types';
 import {environment} from '../environments/environment';
 
@@ -288,92 +287,6 @@ export class PrintService {
       default:
         return TranslationHelper.getAResult(this.language);
     }
-  }
-
-  printParticipationCertificatesAsPdf(wcif: WCIF, personsWithAResult: Person[]) {
-    const document = this.getDocument('landscape', null, false);
-    document.defaultStyle.fontSize = 14;
-    Helpers.sortCompetitorsByName(personsWithAResult);
-    personsWithAResult.forEach(p => {
-      const certificate = this.getParticipationCertificate(wcif, p);
-      document.content.push(this.getOneParticipationCertificateFor(certificate));
-      document.content.push(this.getResultsTableFor(p, wcif));
-    });
-
-    this.removeLastPageBreakFromParticipationCertificates(document);
-    pdfMake.createPdf(document).download('Participation certificates ' + wcif.name + '.pdf');
-  }
-
-
-  private getOneParticipationCertificateFor(certificate: Certificate) {
-    const jsonWithReplacedStrings = this.replaceStringsIn(TranslationHelper.getParticipationTemplate('en'), certificate);
-    const textObject = JSON.parse(jsonWithReplacedStrings);
-    return {
-      text: textObject,
-      alignment: 'center',
-      margin: [this.xOffset, 0, -this.xOffset, 0]
-    };
-  }
-
-  private getParticipationCertificate(wcif: WCIF, p: Person) {
-    const certificate = new Certificate();
-    certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', 'en');
-    certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', 'en');
-    certificate.competitionName = wcif.name;
-    certificate.name = p.name;
-    return certificate;
-  }
-
-  private getResultsTableFor(p: Person, wcif: WCIF) {
-    const table = {
-      width: 'auto',
-      style: 'tableOverview',
-      table: {
-        headerRows: 1,
-        paddingLeft: function (_i, _node) { return 0; },
-        paddingRight: function (_i, _node) { return 0; },
-        paddingTop: function (_i, _node) { return 2; },
-        paddingBottom: function (_i, _node) { return 2; },
-        body: []
-      },
-      layout: 'lightHorizontalLines',
-      pageBreak: 'after'
-    };
-
-    table.table.body.push([TranslationHelper.getEvent('en'),
-      TranslationHelper.getResult('en'),
-      TranslationHelper.getRanking('en')]);
-    wcif.events.forEach(event => {
-      const array = [getEventName(event.id)];
-      const result: Result = this.findResultOfPersonInEvent(p, event);
-      if (result !== null && result.attempts.length > 0) { // If competitor has a result in this event
-        array.push(this.formatResultForEvent(result, event.id));
-        array.push(result.ranking + '');
-        table.table.body.push(array);
-      }
-    });
-
-    return {
-      columns: [
-        {width: '*', text: ''},
-        table,
-        {width: '*', text: ''},
-      ]
-    };
-  }
-
-  private removeLastPageBreakFromParticipationCertificates(document: PdfDocument): void {
-    document.content[document.content.length - 1].columns[1].pageBreak = '';
-  }
-
-  private findResultOfPersonInEvent(p: Person, event: Event) {
-    for (let round = event.rounds.length - 1; round >= 0; round--) {
-      const index = event.rounds[round].results.findIndex(r => r.personId === p.registrantId);
-      if (index > -1) {
-        return event.rounds[round].results[index];
-      }
-    }
-    return null;
   }
 
 }

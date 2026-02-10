@@ -31,8 +31,6 @@ export class AppComponent {
   customCompetitionId: string;
   events: Event[];
   wcif: WCIF | null = null;
-  personsWithAResult: Person[];
-  acceptedPersons: number;
   error: string;
   loading: boolean;
 
@@ -131,7 +129,6 @@ export class AppComponent {
   private processWcifResults(wcif: WCIF) {
     this.loading = false;
     try {
-      this.acceptedPersons = wcif.persons.filter(p => !!p.registration && p.registration.status === 'accepted').length;
       this.events = wcif.events;
       this.events.forEach(function(e) {
         e.rounds.forEach(function(r) {
@@ -140,13 +137,11 @@ export class AppComponent {
             const personOfResult: Person = wcif.persons.filter(p => p.registrantId === result.personId)[0];
             if (personOfResult) {
               result['countryIso2'] = personOfResult.countryIso2;
-              personOfResult['hasAResult'] = true;
             }
           });
         });
       });
 
-      this.personsWithAResult = wcif.persons.filter(p => !!p['hasAResult']);
       this.state = 'PRINT';
     } catch (error) {
       this.loading = false;
@@ -309,10 +304,6 @@ export class AppComponent {
   toggleEventSelection(wcaEvent: Event & { printCertificate?: boolean }, _clickEvent: globalThis.Event): void {
     // Toggle the checkbox state
     wcaEvent.printCertificate = !wcaEvent.printCertificate;
-  }
-
-  printParticipationCertificatesAsPdf() {
-    this.printService.printParticipationCertificatesAsPdf(this.wcif, this.personsWithAResult);
   }
 
   version() {
