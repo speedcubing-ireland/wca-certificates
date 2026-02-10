@@ -427,7 +427,7 @@ textarea {
 
 .mat-tab-label,
 .mat-mdc-tab {
-  color: var(--text-secondary) !important;
+  color: #ffffff !important;
   font-weight: 500 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
