@@ -133,19 +133,16 @@ Then open http://localhost:3000 to test the production bundle.
 
 ### Deploying to GitHub Pages
 
-Before deploying, rebuild with the correct base-href:
+**Automatic (preferred):** Pushing to `master` triggers the CI & Deploy workflow. It runs Cypress E2E tests first, and if they pass, automatically builds and deploys to GitHub Pages using the official GitHub Pages actions. Deployments are tracked in the repo's Environments tab.
+
+**Manual fallback:** For quick rollbacks or emergency fixes, you can still deploy manually:
 
 ```bash
 npm run build-prod
-```
-
-To deploy to GitHub Pages:
-
-```bash
 npm run deploy
 ```
 
-This pushes the `dist/wca-certificates` directory to the `gh-pages` branch, triggering a GitHub Pages deployment.
+This pushes the `dist/wca-certificates` directory to the `gh-pages` branch.
 
 ## Data Sources
 
