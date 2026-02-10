@@ -33,7 +33,6 @@ describe('Navigation & Error States', () => {
 
     it('should navigate to Customize Podium tab', () => {
       cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-      cy.contains('Language').should('be.visible');
       cy.contains('Certificate Template').should('be.visible');
     });
 

@@ -15,7 +15,6 @@ Originally forked from https://github.com/Goosly/wca-certificates
 - Handles ties in podium placement
 
 ### Customization
-- Multi-language support: English (UK/US), Dutch, French, German (Switzerland), Mexican Spanish, Russian
 - Custom JSON-based certificate templates
 - Upload custom background images
 - Configurable page orientation (landscape/portrait)
@@ -30,7 +29,6 @@ Originally forked from https://github.com/Goosly/wca-certificates
 - **Angular** 19.2.18
 - **Angular Material** for UI components
 - **PDFMake** for client-side PDF generation
-- **JSZip** for ZIP file creation
 - **@wca/helpers** for WCA data models
 
 ## Development

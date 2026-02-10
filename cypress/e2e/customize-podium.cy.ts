@@ -27,21 +27,6 @@ describe('Customize Podium Tab', () => {
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
   });
 
-  it('should display language dropdown with all 7 languages', () => {
-    cy.get('select').first().should('be.visible');
-
-    // Check all language options exist
-    const languages = ['Dutch', 'English (UK)', 'English (US)', 'French', 'German (Switzerland)', 'Mexican Spanish', 'Russian'];
-    languages.forEach(lang => {
-      cy.get('select').first().find('option').should('contain', lang);
-    });
-  });
-
-  it('should have Load Template button with warning text', () => {
-    cy.contains('button', 'Load Template').should('be.visible');
-    cy.contains('This will overwrite changes!').should('be.visible');
-  });
-
   it('should have editable certificate template textarea', () => {
     cy.get('textarea').first().should('be.visible');
     cy.get('textarea').first().should('not.be.disabled');
@@ -135,10 +120,5 @@ describe('Customize Podium Tab', () => {
     cy.get('input[type="number"]').should('exist');
     cy.get('input[type="number"]').first().clear().type('10');
     cy.get('input[type="number"]').first().should('have.value', '10');
-  });
-
-  it('should change language when selecting from dropdown', () => {
-    cy.get('select').first().select('fr');
-    cy.get('select').first().should('have.value', 'fr');
   });
 });

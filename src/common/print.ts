@@ -5,7 +5,7 @@ import {Event} from '@wca/helpers/lib/models/event';
 import {Result} from '@wca/helpers/lib/models/result';
 import {formatCentiseconds} from '@wca/helpers/lib/helpers/time';
 import {decodeMultiResult, formatMultiResult, isDnf} from '@wca/helpers/lib/helpers/result';
-import {TranslationHelper} from './translation';
+
 import {getEventName, EventId} from '@wca/helpers';
 import {WCIF, PdfDocument, PdfMakeStatic} from './types';
 import {environment} from '../environments/environment';
@@ -17,7 +17,6 @@ declare const pdfMake: PdfMakeStatic;
 })
 export class PrintService {
 
-  public language = 'en';
   public pageOrientation: 'landscape' | 'portrait' = 'landscape';
   public showLocalNames = false;
   public background: string = null;
@@ -48,7 +47,18 @@ export class PrintService {
       },
     }
 
-    this.podiumCertificateJson = TranslationHelper.getTemplate(this.language);
+    this.podiumCertificateJson = `[\n \
+"\\n\\n\\n\\n\\n",\n \
+{"text": "certificate.event", "fontSize": "40", "bold": "true"},\n \
+"\\n",\n \
+{"text": "certificate.capitalisedPlace Place", "fontSize": "32", "bold": "true"},\n \
+"\\n\\n",\n \
+{"text": "certificate.name", "fontSize": "40", "bold": "true"},\n \
+"\\n\\n",\n \
+"with certificate.resultType of ",\n \
+{"text": "certificate.result", "bold": "true"},\n \
+"  certificate.resultUnit"\n \
+]`;
     const defaultStyle = {
       font: 'Roboto',
       otherFonts: ['barriecito', 'mono']
@@ -62,8 +72,8 @@ export class PrintService {
 
   private getNewCertificate(wcif: WCIF, eventId: string, format: string, result: Result): Certificate {
     const certificate: Certificate = new Certificate();
-    certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', this.language);
-    certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', this.language);
+    certificate.delegate = this.getPersonsWithRole(wcif, 'delegate');
+    certificate.organizers = this.getPersonsWithRole(wcif, 'organizer');
     certificate.competitionName = wcif.name;
     certificate.name = wcif.persons.filter(p => p.registrantId === result.personId)[0].name;
     certificate.place = this.getPlace(result['rankingAfterFiltering']);
@@ -102,7 +112,7 @@ export class PrintService {
     return mean.toString().substring(0, 2) + '.' + mean.toString().substring(2);
   }
 
-  private getPersonsWithRole(wcif: WCIF, role: string, language: string): string {
+  private getPersonsWithRole(wcif: WCIF, role: string): string {
     const persons = wcif.persons.filter(p => p.roles.includes(role));
     persons.sort((a, b) => a.name.localeCompare(b.name));
     if (persons.length === 1) {
@@ -110,19 +120,19 @@ export class PrintService {
     } else {
       const last = persons.pop();
       return persons.map(p => this.formatName(p.name)).join(', ')
-        + ' ' + TranslationHelper.getAnd(language) + ' ' + this.formatName(last.name);
+        + ' and ' + this.formatName(last.name);
     }
   }
 
   private getPlace(place: number) {
     if (place === 1) {
-      return TranslationHelper.getFirst(this.language);
+      return 'first';
     }
     if (place === 2) {
-      return TranslationHelper.getSecond(this.language);
+      return 'second';
     }
     if (place === 3) {
-      return TranslationHelper.getThird(this.language);
+      return 'third';
     }
     console.warn('Not a podium place');
     return '';
@@ -259,14 +269,10 @@ export class PrintService {
     saveAs(new Blob([data]), filename);
   }
 
-  public loadLanguageTemplate() {
-    this.podiumCertificateJson = TranslationHelper.getTemplate(this.language);
-  }
-
   private getResultUnit(eventId: string) {
     switch (eventId) {
       case '333fm':
-        return TranslationHelper.getMoves(this.language);
+        return 'moves';
       default:
         return '';
     }
@@ -275,17 +281,17 @@ export class PrintService {
   private getResultType(format: string, result: Result) {
     switch (format) {
       case 'a':
-        return (result['average'] > 0) ? TranslationHelper.getAnAverage(this.language)
-          : TranslationHelper.getASingle(this.language);
+        return (result['average'] > 0) ? 'an average'
+          : 'a best result';
       case 'm':
-        return (result['average'] > 0) ? TranslationHelper.getAMean(this.language)
-          : TranslationHelper.getASingle(this.language);
+        return (result['average'] > 0) ? 'a mean'
+          : 'a best result';
       case '1':
       case '2':
       case '3':
-        return TranslationHelper.getASingle(this.language);
+        return 'a best result';
       default:
-        return TranslationHelper.getAResult(this.language);
+        return 'a result';
     }
   }
 
