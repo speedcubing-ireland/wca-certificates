@@ -50,14 +50,9 @@ describe('Participation Certificates Tab', () => {
     cy.contains('button', 'Certificates (PDF)').should('be.visible');
   });
 
-  it('should have Download ZIP button', () => {
-    cy.contains('button', 'Certificates (ZIP)').should('be.visible');
-  });
-
   it('should enable download buttons when there are results', () => {
     // Based on fixture data, there should be participants with results
     cy.contains('button', 'Certificates (PDF)').should('not.be.disabled');
-    cy.contains('button', 'Certificates (ZIP)').should('not.be.disabled');
   });
 
   it('should display generation note', () => {
@@ -129,7 +124,6 @@ describe('Participation Certificates Tab - No Results', () => {
 
   it('should disable download buttons when no results', () => {
     cy.contains('button', 'Certificates (PDF)').should('be.disabled');
-    cy.contains('button', 'Certificates (ZIP)').should('be.disabled');
   });
 
   it('should show 0 for With Results', () => {

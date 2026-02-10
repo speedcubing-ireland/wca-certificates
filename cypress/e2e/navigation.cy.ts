@@ -160,7 +160,6 @@ describe('Navigation & Error States', () => {
 
     it('should have action buttons in header', () => {
       cy.contains('button', 'Refresh Data').should('be.visible');
-      cy.contains('button', 'Empty Certificate').should('be.visible');
     });
   });
 });

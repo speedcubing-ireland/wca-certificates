@@ -236,22 +236,12 @@ export class AppComponent {
     this.apiService.logUserClicksDownloadCertificatesAsPdf(this.wcif.id);
   }
 
-  printCertificatesAsZip() {
-    this.printService.printCertificatesAsZip(this.wcif, this.getSelectedEvents());
-    this.apiService.logUserClicksDownloadCertificatesAsZip(this.wcif.id);
-  }
-
   printCertificatesAsPreview() {
     this.printService.printCertificatesAsPreview(this.wcif, this.getSelectedEvents());
-    this.apiService.logUserClicksDownloadCertificatesAsZip(this.wcif.id);
   }
 
   private getSelectedEvents() {
     return Array.from(this.events.filter(e => e['printCertificate']).map(e => e.id));
-  }
-
-  printEmptyCertificate() {
-    this.printService.printEmptyCertificate(this.wcif);
   }
 
   getWarningIfAny(eventId: string): string {
@@ -325,11 +315,6 @@ export class AppComponent {
   printParticipationCertificatesAsPdf() {
     this.printService.printParticipationCertificatesAsPdf(this.wcif, this.personsWithAResult);
     this.apiService.logUserClicksDownloadParticipationCertificatesAsPdf(this.wcif.id);
-  }
-
-  printParticipationCertificatesAsZip() {
-    this.printService.printParticipationCertificatesAsZip(this.wcif, this.personsWithAResult);
-    this.apiService.logUserClicksDownloadParticipationCertificatesAsZip(this.wcif.id);
   }
 
   version() {

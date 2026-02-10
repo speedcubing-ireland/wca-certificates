@@ -63,20 +63,12 @@ describe('Podium Certificates Tab', () => {
     cy.contains('button', 'Download PDF').should('not.be.disabled');
   });
 
-  it('should have Download ZIP button', () => {
-    cy.contains('button', 'Download ZIP').should('be.visible');
-  });
-
   it('should have Preview button', () => {
     cy.contains('button', 'Preview').should('be.visible');
   });
 
   it('should have Refresh Data button', () => {
     cy.contains('button', 'Refresh Data').should('be.visible');
-  });
-
-  it('should have Empty Certificate button', () => {
-    cy.contains('button', 'Empty Certificate').should('be.visible');
   });
 
   it('should refresh data when clicking Refresh Data button', () => {

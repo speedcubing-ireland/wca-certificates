@@ -106,16 +106,8 @@ export class ApiService {
     this.logMessage(competitionId + ' - Certificates downloaded as pdf');
   }
 
-  logUserClicksDownloadCertificatesAsZip(competitionId: string) {
-    this.logMessage(competitionId + ' - Certificates downloaded as zip');
-  }
-
   logUserClicksDownloadParticipationCertificatesAsPdf(competitionId: string) {
     this.logMessage(competitionId + ' - Participation certificates downloaded as pdf');
-  }
-
-  logUserClicksDownloadParticipationCertificatesAsZip(competitionId: string) {
-    this.logMessage(competitionId + ' - Participation certificates downloaded as zip');
   }
 
   private logMessage(message: string) {

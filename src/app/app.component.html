@@ -120,7 +120,6 @@
           </div>
           <div class="comp-actions">
             <button class="btn-secondary" (click)="handleRefreshCompetition()">Refresh Data</button>
-            <button class="btn-secondary" (click)="printEmptyCertificate()">Empty Certificate</button>
           </div>
         </div>
 
@@ -170,11 +169,6 @@
                           (click)="printCertificatesAsPdf()"
                           [disabled]="printDisabled()">
                     Download PDF
-                  </button>
-                  <button class="btn-secondary"
-                          (click)="printCertificatesAsZip()"
-                          [disabled]="printDisabled()">
-                    Download ZIP
                   </button>
                   <button class="btn-secondary"
                           (click)="printCertificatesAsPreview()"
@@ -306,11 +300,6 @@
                           (click)="printParticipationCertificatesAsPdf()"
                           [disabled]="personsWithAResult.length === 0">
                     Download {{ personsWithAResult.length }} Certificates (PDF)
-                  </button>
-                  <button class="btn-secondary"
-                          (click)="printParticipationCertificatesAsZip()"
-                          [disabled]="personsWithAResult.length === 0">
-                    Download {{ personsWithAResult.length }} Certificates (ZIP)
                   </button>
                 </div>
 
