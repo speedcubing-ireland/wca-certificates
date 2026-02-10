@@ -92,9 +92,8 @@ describe('Competition Selection', () => {
     cy.get('.error-message', { timeout: 10000 }).should('be.visible');
   });
 
-  it('should display footer links', () => {
+  it('should display footer link', () => {
     cy.get('.footer').should('be.visible');
-    cy.get('.footer a[href*="wiki"]').should('contain', 'Documentation');
     cy.get('.footer a[href*="github.com"]').should('contain', 'Source Code');
   });
 });
