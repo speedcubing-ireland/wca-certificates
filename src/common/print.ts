@@ -19,19 +19,15 @@ declare const pdfMake: PdfMakeStatic;
 export class PrintService {
 
   public language = 'en';
-  public participationLanguage = 'en';
   public pageOrientation: 'landscape' | 'portrait' = 'landscape';
-  public participationPageOrientation: 'landscape' | 'portrait' = 'landscape';
   public showLocalNames = false;
   public background: string = null;
   public backgroundForPreviewOnly = true;
-  public participationBackground: string = null;
   public countries = '';
   public xOffset = 0;
 
   public podiumCertificateJson = '';
   public podiumCertificateStyleJson = '';
-  public participationCertificateJson = '';
 
   constructor() {
     const baseUrl = environment.appUrl;
@@ -59,7 +55,6 @@ export class PrintService {
       otherFonts: ['barriecito', 'mono']
     }
     this.podiumCertificateStyleJson = JSON.stringify(defaultStyle, null, 2);
-    this.participationCertificateJson = TranslationHelper.getParticipationTemplate(this.participationLanguage);
   }
 
   public getEventName(eventId: EventId | string) {
@@ -220,20 +215,8 @@ export class PrintService {
     this.backgroundForPreviewOnly = true;
   }
 
-  public handleParticipationBackgroundSelected(files: FileList) {
-    const reader = new FileReader();
-    reader.readAsDataURL(files.item(0));
-    reader.onloadend = (_e) => {
-      this.participationBackground = reader.result as string;
-    };
-  }
-
   public clearBackground() {
     this.background = null;
-  }
-
-  public clearParticipationBackground() {
-    this.participationBackground = null;
   }
 
   private removeLastPageBreak(document: PdfDocument): void {
@@ -281,10 +264,6 @@ export class PrintService {
     this.podiumCertificateJson = TranslationHelper.getTemplate(this.language);
   }
 
-  public loadLanguageParticipationTemplate() {
-    this.participationCertificateJson = TranslationHelper.getParticipationTemplate(this.participationLanguage);
-  }
-
   private getResultUnit(eventId: string) {
     switch (eventId) {
       case '333fm':
@@ -312,7 +291,7 @@ export class PrintService {
   }
 
   printParticipationCertificatesAsPdf(wcif: WCIF, personsWithAResult: Person[]) {
-    const document = this.getDocument(this.participationPageOrientation, this.participationBackground, false);
+    const document = this.getDocument('landscape', null, false);
     document.defaultStyle.fontSize = 14;
     Helpers.sortCompetitorsByName(personsWithAResult);
     personsWithAResult.forEach(p => {
@@ -327,7 +306,7 @@ export class PrintService {
 
 
   private getOneParticipationCertificateFor(certificate: Certificate) {
-    const jsonWithReplacedStrings = this.replaceStringsIn(this.participationCertificateJson, certificate);
+    const jsonWithReplacedStrings = this.replaceStringsIn(TranslationHelper.getParticipationTemplate('en'), certificate);
     const textObject = JSON.parse(jsonWithReplacedStrings);
     return {
       text: textObject,
@@ -338,8 +317,8 @@ export class PrintService {
 
   private getParticipationCertificate(wcif: WCIF, p: Person) {
     const certificate = new Certificate();
-    certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', this.participationLanguage);
-    certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', this.participationLanguage);
+    certificate.delegate = this.getPersonsWithRole(wcif, 'delegate', 'en');
+    certificate.organizers = this.getPersonsWithRole(wcif, 'organizer', 'en');
     certificate.competitionName = wcif.name;
     certificate.name = p.name;
     return certificate;
@@ -361,9 +340,9 @@ export class PrintService {
       pageBreak: 'after'
     };
 
-    table.table.body.push([TranslationHelper.getEvent(this.participationLanguage),
-      TranslationHelper.getResult(this.participationLanguage),
-      TranslationHelper.getRanking(this.participationLanguage)]);
+    table.table.body.push([TranslationHelper.getEvent('en'),
+      TranslationHelper.getResult('en'),
+      TranslationHelper.getRanking('en')]);
     wcif.events.forEach(event => {
       const array = [getEventName(event.id)];
       const result: Result = this.findResultOfPersonInEvent(p, event);

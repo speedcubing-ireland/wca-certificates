@@ -341,9 +341,4 @@ export class AppComponent {
     fileInput.value = '';
   }
 
-  clearParticipationBackground(fileInput: HTMLInputElement) {
-    this.printService.clearParticipationBackground();
-    fileInput.value = '';
-  }
-
 }

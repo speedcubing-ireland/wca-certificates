@@ -42,11 +42,6 @@ describe('Navigation & Error States', () => {
       cy.contains('Total Competitors').should('be.visible');
     });
 
-    it('should navigate to Customize Participation tab', () => {
-      cy.contains('.mat-mdc-tab', 'Customize Participation').click();
-      cy.contains('Language').should('be.visible');
-    });
-
     it('should allow navigating between all tabs', () => {
       // Navigate through all tabs
       cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
@@ -57,9 +52,6 @@ describe('Navigation & Error States', () => {
 
       cy.contains('.mat-mdc-tab', 'Participation Certificates').click();
       cy.contains('Total Competitors').should('be.visible');
-
-      cy.contains('.mat-mdc-tab', 'Customize Participation').click();
-      cy.get('textarea').should('be.visible');
 
       // Go back to first tab
       cy.contains('.mat-mdc-tab', 'Podium Certificates').click();

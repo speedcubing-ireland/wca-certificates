@@ -159,119 +159,24 @@ export class TranslationHelper {
     }
   }
 
-  public static getParticipationTemplate(language: string): string {
-    switch (language) {
-      case 'en':
-        return '[' + '\n' +
-          '"\\n\\n\\n",' + '\n' +
-          '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-          '", on behalf of the ",' + '\n' +
-          '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-          '", and ",' + '\n' +
-          '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-          '", on behalf of the organisation team of ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", certify that",' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '"has participated in ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", obtaining the following results:\\n\\n"' + '\n' +
-          ']';
-      case 'en-us':
-        return '[' + '\n' +
-          '"\\n\\n\\n",' + '\n' +
-          '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-          '", on behalf of the ",' + '\n' +
-          '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-          '", and ",' + '\n' +
-          '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-          '", on behalf of the organization team of ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", certify that",' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '"has participated in ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", obtaining the following results:\\n\\n"' + '\n' +
-          ']';
-      case 'nl':
-        return '[' + '\n' +
-          '"\\n\\n\\n",' + '\n' +
-          '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-          '", namens de ",' + '\n' +
-          '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-          '", en ",' + '\n' +
-          '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-          '", namens het organisatieteam van ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", verklaren dat",' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '"heeft deelgenomen aan ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '" en de volgende resultaten heeft behaald:\\n\\n"' + '\n' +
-          ']';
-      case 'ru':
-        return '[' + '\n' +
-          '"\\n\\n\\n",' + '\n' +
-          '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-          '", со стороны ",' + '\n' +
-          '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-          '", и ",' + '\n' +
-          '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-          '", со стороны команды организаторов ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", подтверждают, что",' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '"принял(а) участие в ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", достигнув следующих результатов:\\n\\n"' + '\n' +
-          ']';
-      case 'es-mx':
-        return '[' + '\n' +
-          '"\\n\\n\\n",' + '\n' +
-          '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-          '", en nombre de la ",' + '\n' +
-          '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-          '", y ",' + '\n' +
-          '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-          '", en representación del equipo organizador del ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", certifican que",' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '"ha participado en el ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '", obteniendo los siguientes resultados:\\n\\n"' + '\n' +
-          ']';
-      case 'de-ch':
-        return '[' + '\n' +
-          '"\\n\\n\\n",' + '\n' +
-          '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
-          '" im Namen der ",' + '\n' +
-          '{"text": "World Cube Association", "bold": "true"},' + '\n' +
-          '" und ",' + '\n' +
-          '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
-          '" im Namen des Organisationsteams von ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '" bestätigen, dass",' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
-          '"\\n\\n",' + '\n' +
-          '"teilgenommen hat bei ",' + '\n' +
-          '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
-          '" und dabei folgende Ergebnisse erreicht hat:\\n\\n"' + '\n' +
-          ']';
-      default:
-        return this.getParticipationTemplate('en');
-    }
+  public static getParticipationTemplate(_language: string): string {
+    return '[' + '\n' +
+      '"\\n\\n\\n",' + '\n' +
+      '{"text": "certificate.delegate", "bold": "true"},' + '\n' +
+      '", on behalf of the ",' + '\n' +
+      '{"text": "World Cube Association", "bold": "true"},' + '\n' +
+      '", and ",' + '\n' +
+      '{"text": "certificate.organizers", "bold": "true"},' + '\n' +
+      '", on behalf of the organisation team of ",' + '\n' +
+      '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
+      '", certify that",' + '\n' +
+      '"\\n\\n",' + '\n' +
+      '{"text": "certificate.name", "fontSize": "32", "bold": "true"},' + '\n' +
+      '"\\n\\n",' + '\n' +
+      '"has participated in ",' + '\n' +
+      '{"text": "certificate.competitionName", "bold": "true"},' + '\n' +
+      '", obtaining the following results:\\n\\n"' + '\n' +
+      ']';
   }
 
   public static getAnd(language: string): string {

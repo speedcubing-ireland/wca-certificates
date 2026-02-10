@@ -310,68 +310,6 @@
             </div>
           </mat-tab>
 
-          <!-- CUSTOMIZE PARTICIPATION TAB -->
-          <mat-tab label="Customize Participation">
-            <div class="p-4">
-
-              <!-- Language Selection -->
-              <div class="flex items-center gap-4 mb-4">
-                <label for="participation-language" style="color: var(--text-secondary); min-width: 80px;">Language:</label>
-                <select id="participation-language" [(ngModel)]='printService.participationLanguage' style="flex: 1; max-width: 200px;">
-                  <option value='nl'>Dutch</option>
-                  <option value='en'>English (UK)</option>
-                  <option value='en-us'>English (US)</option>
-                  <option value='de-ch'>German (Switzerland)</option>
-                  <option value='es-mx'>Mexican Spanish</option>
-                  <option value='ru'>Russian</option>
-                </select>
-                <button class="btn-secondary" (click)="printService.loadLanguageParticipationTemplate()">Load Template</button>
-                <span style="color: var(--warning-color); font-size: 11px;">This will overwrite changes!</span>
-              </div>
-
-              <!-- Template Configuration -->
-              <div class="mb-4">
-                <label for="participation-template" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Certificate Template:</label>
-                <textarea id="participation-template" [(ngModel)]="printService.participationCertificateJson"
-                          placeholder="Participation certificate template JSON..."></textarea>
-              </div>
-
-              <!-- Additional Options -->
-              <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-4">
-                  <label for="participation-background" style="color: var(--text-secondary); min-width: 120px;">Background:</label>
-                  <input id="participation-background" #participationBackgroundFileInput type="file" (change)="printService.handleParticipationBackgroundSelected($event.target.files)"/>
-                  <button class="btn-secondary"
-                          (click)="clearParticipationBackground(participationBackgroundFileInput)"
-                          [disabled]="!printService.participationBackground">Clear</button>
-                  @if (printService.participationBackground) {
-                    <span style="color: var(--success-color); font-size: 12px;">✓ Background set</span>
-                  }
-                  @if (!printService.participationBackground) {
-                    <span style="color: var(--text-muted); font-size: 12px;">No background</span>
-                  }
-                </div>
-
-                <div class="flex items-center gap-4">
-                  <label for="participation-orientation" style="color: var(--text-secondary); min-width: 120px;">Orientation:</label>
-                  <select id="participation-orientation" [(ngModel)]='printService.participationPageOrientation' style="max-width: 150px;">
-                    <option value='landscape'>Landscape</option>
-                    <option value='portrait'>Portrait</option>
-                  </select>
-                </div>
-
-                <div class="flex items-center gap-4">
-                  <label for="participation-xoffset" style="color: var(--text-secondary); min-width: 120px;">X Offset:</label>
-                  <input id="participation-xoffset" [(ngModel)]='printService.xOffset'
-                         type="number"
-                         placeholder="0"
-                         style="max-width: 100px;"/>
-                  <span style="color: var(--text-muted); font-size: 12px;">Points (positive = right, negative = left)</span>
-                </div>
-              </div>
-            </div>
-          </mat-tab>
-
         </mat-tab-group>
       </div>
     }
