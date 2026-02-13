@@ -64,5 +64,6 @@
     "startDate": "2024-06-15",
     "numberOfDays": 2,
     "venues": []
-  }
+  },
+  "extensions": []
 }

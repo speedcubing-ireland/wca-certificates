@@ -599,3 +599,19 @@ textarea {
 .font-medium {
   font-weight: 500;
 }
+
+/* Auth section in header */
+.auth-section {
+  flex-shrink: 0;
+}
+
+/* Template save/load actions */
+.template-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}

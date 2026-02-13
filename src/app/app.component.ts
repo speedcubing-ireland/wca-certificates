@@ -4,6 +4,8 @@ import {FormsModule} from '@angular/forms';
 import {MatTabsModule} from '@angular/material/tabs';
 import {ApiService} from '../common/api';
 import {PrintService} from '../common/print';
+import {AuthService} from '../common/auth';
+import {TemplateExtensionService} from '../common/template-extension';
 import {Event} from '@wca/helpers/lib/models/event';
 import {Result} from '@wca/helpers/lib/models/result';
 import {Person} from '@wca/helpers';
@@ -36,6 +38,13 @@ export class AppComponent {
 
   apiService = inject(ApiService);
   printService = inject(PrintService);
+  authService = inject(AuthService);
+  templateExtensionService = inject(TemplateExtensionService);
+
+  savingTemplate = false;
+  templateSaveSuccess = false;
+  templateSaveError: string | null = null;
+  templateLoaded = false;
 
   constructor() {
       this.handleGetCompetitions();
@@ -330,6 +339,45 @@ export class AppComponent {
   clearBackground(fileInput: HTMLInputElement) {
     this.printService.clearBackground();
     fileInput.value = '';
+  }
+
+  get acceptedPersons(): number {
+    if (!this.wcif) return 0;
+    return this.wcif.persons.filter(p => p.registration?.status === 'accepted').length;
+  }
+
+  login(): void {
+    this.authService.login();
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  loadTemplate(): void {
+    if (this.wcif && this.templateExtensionService.loadTemplate(this.wcif)) {
+      this.templateLoaded = true;
+      setTimeout(() => this.templateLoaded = false, 3000);
+    }
+  }
+
+  saveTemplate(): void {
+    if (!this.wcif || !this.competitionId) return;
+    this.savingTemplate = true;
+    this.templateSaveSuccess = false;
+    this.templateSaveError = null;
+
+    this.templateExtensionService.saveTemplate(this.competitionId, this.wcif).subscribe({
+      next: () => {
+        this.savingTemplate = false;
+        this.templateSaveSuccess = true;
+        setTimeout(() => this.templateSaveSuccess = false, 3000);
+      },
+      error: (err: { message?: string }) => {
+        this.savingTemplate = false;
+        this.templateSaveError = err?.message || 'Failed to save template';
+      }
+    });
   }
 
 }
