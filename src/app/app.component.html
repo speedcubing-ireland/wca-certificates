@@ -1,9 +1,18 @@
 <div class="wrapper">
   <!-- Header -->
   <div class="header">
-    <div class="flex items-center">
-      <h1>WCA Competition Certificates</h1>
-      <h6>{{version()}}</h6>
+    <div class="flex items-center justify-between" style="width: 100%;">
+      <div class="flex items-center">
+        <h1>WCA Competition Certificates</h1>
+        <h6>{{version()}}</h6>
+      </div>
+      <div class="auth-section">
+        @if (authService.isLoggedIn()) {
+          <button class="btn-secondary" (click)="logout()">Log Out (WCA)</button>
+        } @else {
+          <button class="btn-secondary" (click)="login()">Log In (WCA)</button>
+        }
+      </div>
     </div>
   </div>
 
@@ -249,6 +258,40 @@
                          style="max-width: 100px;"/>
                   <span style="color: var(--text-muted); font-size: 12px;">Points (positive = right, negative = left)</span>
                 </div>
+              </div>
+
+              <!-- Template Save/Load -->
+              <div class="template-actions">
+                <h3 style="color: var(--accent-primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px 0;">Saved Templates</h3>
+                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">Background images are not included in saved templates.</p>
+
+                <div class="flex gap-4 flex-wrap items-center">
+                  @if (wcif && templateExtensionService.hasTemplate(wcif)) {
+                    <button class="btn-secondary" (click)="loadTemplate()" data-cy="load-template">Load Saved Template</button>
+                  }
+
+                  @if (authService.isLoggedIn()) {
+                    <button class="btn-primary" (click)="saveTemplate()" [disabled]="savingTemplate" data-cy="save-template">
+                      @if (savingTemplate) {
+                        Saving...
+                      } @else {
+                        Save Template to Competition
+                      }
+                    </button>
+                  } @else {
+                    <span style="color: var(--text-muted); font-size: 12px;" data-cy="save-hint">Log in with WCA to save templates</span>
+                  }
+                </div>
+
+                @if (templateLoaded) {
+                  <div style="color: var(--success-color); margin-top: 8px; font-size: 12px;" data-cy="load-success">Template loaded successfully.</div>
+                }
+                @if (templateSaveSuccess) {
+                  <div style="color: var(--success-color); margin-top: 8px; font-size: 12px;" data-cy="save-success">Template saved successfully.</div>
+                }
+                @if (templateSaveError) {
+                  <div style="color: var(--error-color); margin-top: 8px; font-size: 12px;" data-cy="save-error">Error: {{ templateSaveError }}</div>
+                }
               </div>
             </div>
           </mat-tab>

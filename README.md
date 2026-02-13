@@ -20,6 +20,11 @@ Originally forked from https://github.com/Goosly/wca-certificates
 - Configurable page orientation (landscape/portrait)
 - X-offset adjustment for precise positioning
 
+### Template Save/Load
+- Save certificate template settings to a WCA competition (requires WCA login with competition management permissions)
+- Load saved templates from any competition without logging in
+- Uses the WCIF Extension mechanism for persistence
+
 ### Export Options
 - Download as single PDF
 - Preview in browser before printing
@@ -78,6 +83,14 @@ Navigate to http://localhost:4200/
 npm run lint
 ```
 
+### Unit Testing (Karma/Jasmine)
+
+```bash
+npm test
+```
+
+Runs unit tests in headless Chrome. Spec files live alongside their source files (`*.spec.ts`).
+
 ### End-to-End Testing (Cypress)
 
 The project uses [Cypress](https://www.cypress.io/) for end-to-end testing.
@@ -100,6 +113,7 @@ The test suite covers:
 - Competition selection and loading
 - Podium certificate generation
 - Certificate customization options
+- Template save/load via WCIF extensions
 - Tab navigation and error handling
 
 ## Build & Deploy
@@ -136,6 +150,16 @@ npm run deploy
 ```
 
 This pushes the `dist/wca-certificates` directory to the `gh-pages` branch.
+
+## Template Save/Load (OAuth)
+
+The app supports saving and loading podium certificate templates to/from WCA competitions using the WCIF Extension mechanism. Loading saved templates works without authentication (uses the public WCIF endpoint). Saving requires logging in with a WCA account that has competition management permissions.
+
+### Testing OAuth locally
+
+The OAuth popup redirects to the URL configured in `environment.ts` (`appUrl`) followed by callback.html e.g `http://localhost:4200/callback.html`.
+
+If the WCA OAuth app only has the production GitHub Pages URL registered, the popup redirect will fail on localhost. As such also add `http://localhost:4200/callback.html` as a registered redirect URI whilst you test.
 
 ## Data Sources
 

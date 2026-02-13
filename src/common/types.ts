@@ -1,6 +1,27 @@
 import { Event, Person } from '@wca/helpers';
 
 /**
+ * WCIF Extension
+ */
+export interface WcifExtension {
+  id: string;
+  specUrl: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * Podium template extension data
+ */
+export interface PodiumTemplateExtensionData {
+  podiumCertificateJson: string;
+  podiumCertificateStyleJson: string;
+  pageOrientation: 'landscape' | 'portrait';
+  backgroundForPreviewOnly: boolean;
+  countries: string;
+  xOffset: number;
+}
+
+/**
  * Competition summary from the unofficial WCA API
  */
 export interface Competition {
@@ -44,7 +65,7 @@ export interface WCIF {
   events: Event[];
   schedule: unknown;
   competitorLimit: number | null;
-  extensions: unknown[];
+  extensions: WcifExtension[];
 }
 
 /**
