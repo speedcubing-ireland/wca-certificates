@@ -15,6 +15,10 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      checks: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +35,14 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Unit test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit Tests
+          path: reports/unit-tests.xml
+          reporter: java-junit
+
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
@@ -39,6 +51,14 @@ jobs:
           wait-on: 'http://localhost:4200'
           wait-on-timeout: 120
           browser: chrome
+
+      - name: E2E test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: E2E Tests
+          path: reports/cypress-tests-*.xml
+          reporter: java-junit
 
       - name: Upload screenshots on failure
         uses: actions/upload-artifact@v4

@@ -15,5 +15,11 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       // implement node event listeners here
     },
+    ...(process.env['CI'] && {
+      reporter: 'junit',
+      reporterOptions: {
+        mochaFile: 'reports/cypress-tests-[hash].xml',
+      },
+    }),
   },
 });
