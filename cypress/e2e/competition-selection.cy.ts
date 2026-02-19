@@ -34,7 +34,7 @@ describe('Competition Selection', () => {
 
   it('should navigate to competition view when clicking a competition', () => {
     // Mock the WCIF API response
-    cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
       fixture: 'wcif.json'
     }).as('getWcif');
 
@@ -59,7 +59,7 @@ describe('Competition Selection', () => {
   });
 
   it('should load custom competition when ID is entered', () => {
-    cy.intercept('GET', '**/api/v0/competitions/CustomComp2024/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/CustomComp2024/wcif/', {
       fixture: 'wcif.json'
     }).as('getCustomWcif');
 
@@ -76,7 +76,7 @@ describe('Competition Selection', () => {
   });
 
   it('should display error message for invalid competition ID', () => {
-    cy.intercept('GET', '**/api/v0/competitions/InvalidComp/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/InvalidComp/wcif/', {
       statusCode: 404,
       body: { error: 'Competition not found' }
     }).as('getInvalidWcif');
@@ -95,5 +95,39 @@ describe('Competition Selection', () => {
   it('should display footer link', () => {
     cy.get('.footer').should('be.visible');
     cy.get('.footer a[href*="github.com"]').should('contain', 'Source Code');
+  });
+});
+
+describe('Competition Selection - Login Gate', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/IE.json', {
+      fixture: 'competitions.json'
+    }).as('getIrishCompetitions');
+
+    cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/GB.json', {
+      fixture: 'competitions-gb.json'
+    }).as('getUKCompetitions');
+  });
+
+  it('should hide competition list and show login prompt when not logged in', () => {
+    window.localStorage.removeItem('wca_access_token');
+    cy.visit('/');
+    cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+
+    cy.get('.comp-selection').should('be.visible');
+    cy.get('h2').should('contain', 'Select Competition');
+    cy.contains('Please log in with your WCA account to access competitions').should('be.visible');
+    cy.get('.competition').should('not.exist');
+    cy.get('input[placeholder="Enter competition ID"]').should('not.exist');
+  });
+
+  it('should show competition list when logged in', () => {
+    cy.visit('/');
+    cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+
+    cy.get('.comp-selection').should('be.visible');
+    cy.contains('Please log in with your WCA account to access competitions').should('not.exist');
+    cy.get('.comp-category').should('have.length.at.least', 1);
+    cy.get('input[placeholder="Enter competition ID"]').should('be.visible');
   });
 });

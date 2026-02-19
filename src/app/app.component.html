@@ -1,9 +1,18 @@
 <div class="wrapper">
   <!-- Header -->
   <div class="header">
-    <div class="flex items-center">
-      <h1>WCA Competition Certificates</h1>
-      <h6>{{version()}}</h6>
+    <div class="flex items-center justify-between" style="width: 100%;">
+      <div class="flex items-center">
+        <h1>WCA Competition Certificates</h1>
+        <h6>{{version()}}</h6>
+      </div>
+      <div class="auth-section">
+        @if (authService.isLoggedIn()) {
+          <button class="btn-secondary" (click)="logout()">Log Out (WCA)</button>
+        } @else {
+          <button class="btn-secondary" (click)="login()">Log In (WCA)</button>
+        }
+      </div>
     </div>
   </div>
 
@@ -15,6 +24,8 @@
       <div class="comp-selection">
         <h2>Select Competition</h2>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Choose from Irish competitions or enter a custom competition ID</p>
+
+        @if (authService.isLoggedIn()) {
 
         @if (competitionsToChooseFrom) {
 
@@ -103,6 +114,13 @@
             </div>
           }
         }
+
+        } @else {
+          <div style="text-align: center; padding: 40px 20px; background: var(--bg-tertiary); border-radius: 8px; margin-top: 16px;">
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">Please log in with your WCA account to access competitions.</p>
+            <button class="btn-primary" (click)="login()">Log In (WCA)</button>
+          </div>
+        }
       </div>
     }
 
@@ -121,6 +139,35 @@
           <div class="comp-actions">
             <button class="btn-secondary" (click)="handleRefreshCompetition()">Refresh Data</button>
           </div>
+        </div>
+
+        <!-- Saved Templates -->
+        <div class="template-actions">
+          <h3>Saved Templates</h3>
+          <p class="template-hint">Background images are not included in saved templates.</p>
+
+          <div class="flex gap-4 flex-wrap items-center">
+            <button class="btn-secondary" (click)="loadTemplateFromServer()" [disabled]="reloadingTemplate" data-cy="load-template">
+              @if (reloadingTemplate) {
+                Loading...
+              } @else {
+                Load Saved Template
+              }
+            </button>
+
+            <button class="btn-primary" (click)="saveTemplate()" [disabled]="!authService.isLoggedIn() || savingTemplate" data-cy="save-template"
+                    [title]="authService.isLoggedIn() ? '' : 'Log in with WCA to save templates'">
+              @if (savingTemplate) {
+                Saving...
+              } @else {
+                Save Template on WCA
+              }
+            </button>
+          </div>
+
+          @if (templateMessage) {
+            <div class="template-message-{{ templateMessage.type }}" data-cy="template-message">{{ templateMessage.text }}</div>
+          }
         </div>
 
         <!-- Tabs -->
@@ -190,23 +237,23 @@
 
               <!-- Template Configuration -->
               <div class="mb-4">
-                <label for="podium-template" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Certificate Template:</label>
+                <label for="podium-template" class="field-label">Certificate Template:</label>
                 <textarea id="podium-template" [(ngModel)]="printService.podiumCertificateJson"
                           placeholder="Certificate template JSON..."></textarea>
-                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateJson()">Reset Certificate Template</button>
+                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateJson()">Reset to Default Template</button>
               </div>
 
               <div class="mb-4">
-                <label for="podium-style" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Style Configuration:</label>
+                <label for="podium-style" class="field-label">Style Configuration:</label>
                 <textarea id="podium-style" [(ngModel)]="printService.podiumCertificateStyleJson"
                           placeholder="Style configuration JSON..."></textarea>
-                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateStyleJson()">Reset Style Configuration</button>
+                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateStyleJson()">Reset to Default Style</button>
               </div>
 
               <!-- Additional Options -->
               <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-4">
-                  <label for="podium-background" style="color: var(--text-secondary); min-width: 120px;">Background:</label>
+                  <label for="podium-background" class="field-label-inline">Background:</label>
                   <input id="podium-background" #backgroundFileInput type="file" (change)="printService.handleBackgroundSelected($event.target.files)"/>
                   @if (printService.background) {
                     <label for="backgroundForPreview">For preview only</label>
@@ -226,7 +273,7 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <label for="podium-orientation" style="color: var(--text-secondary); min-width: 120px;">Orientation:</label>
+                  <label for="podium-orientation" class="field-label-inline">Orientation:</label>
                   <select id="podium-orientation" [(ngModel)]='printService.pageOrientation' style="max-width: 150px;">
                     <option value='landscape'>Landscape</option>
                     <option value='portrait'>Portrait</option>
@@ -234,7 +281,7 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <label for="podium-countries" style="color: var(--text-secondary); min-width: 120px;">Countries filter:</label>
+                  <label for="podium-countries" class="field-label-inline">Countries filter:</label>
                   <input id="podium-countries" [(ngModel)]='printService.countries'
                          type="text"
                          placeholder="ISO codes (semicolon-separated)"
@@ -242,7 +289,7 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <label for="podium-xoffset" style="color: var(--text-secondary); min-width: 120px;">X Offset:</label>
+                  <label for="podium-xoffset" class="field-label-inline">X Offset:</label>
                   <input id="podium-xoffset" [(ngModel)]='printService.xOffset'
                          type="number"
                          placeholder="0"
@@ -250,6 +297,7 @@
                   <span style="color: var(--text-muted); font-size: 12px;">Points (positive = right, negative = left)</span>
                 </div>
               </div>
+
             </div>
           </mat-tab>
 

@@ -155,5 +155,18 @@
     "numberOfDays": 2,
     "venues": []
   },
-  "extensions": []
+  "extensions": [
+    {
+      "id": "io.github.speedcubing_ireland.podiumTemplate",
+      "specUrl": "https://github.com/speedcubing-ireland/wca-certificates",
+      "data": {
+        "podiumCertificateJson": "[\"Saved Template Content\"]",
+        "podiumCertificateStyleJson": "{\"font\": \"mono\"}",
+        "pageOrientation": "portrait",
+        "backgroundForPreviewOnly": false,
+        "countries": "IE",
+        "xOffset": 25
+      }
+    }
+  ]
 }

@@ -24,7 +24,7 @@ describe('Results API Fallback', () => {
   describe('when WCIF has no results but /results API has data', () => {
     beforeEach(() => {
       // WCIF returns empty results
-      cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
         fixture: 'wcif-no-results.json'
       }).as('getWcif');
 
@@ -97,7 +97,7 @@ describe('Results API Fallback', () => {
   describe('when WCIF has no results and /results API also has no data', () => {
     beforeEach(() => {
       // WCIF returns empty results
-      cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
         fixture: 'wcif-no-results.json'
       }).as('getWcif');
 
@@ -139,7 +139,7 @@ describe('Results API Fallback', () => {
   describe('when WCIF has no results and /results API fails', () => {
     beforeEach(() => {
       // WCIF returns empty results
-      cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
         fixture: 'wcif-no-results.json'
       }).as('getWcif');
 
@@ -178,7 +178,7 @@ describe('Results API Fallback', () => {
   describe('when WCIF already has results', () => {
     beforeEach(() => {
       // WCIF returns results (normal case)
-      cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
         fixture: 'wcif.json'
       }).as('getWcif');
 

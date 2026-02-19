@@ -11,7 +11,7 @@ describe('Customize Podium Tab', () => {
       fixture: 'competitions-gb.json'
     }).as('getUKCompetitions');
 
-    cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
       fixture: 'wcif.json'
     }).as('getWcif');
 
@@ -128,7 +128,7 @@ describe('Customize Podium Tab', () => {
       cy.get('textarea#podium-template').should('have.value', 'edited template');
 
       // Click the Reset button below the template textarea
-      cy.contains('button', 'Reset Certificate Template').click();
+      cy.contains('button', 'Reset to Default Template').click();
       cy.get('textarea#podium-template').should('have.value', defaultValue);
     });
   });
@@ -139,7 +139,7 @@ describe('Customize Podium Tab', () => {
       cy.get('textarea#podium-style').should('have.value', 'edited style');
 
       // Click the Reset button below the style textarea
-      cy.contains('button', 'Reset Style Configuration').click();
+      cy.contains('button', 'Reset to Default Style').click();
       cy.get('textarea#podium-style').should('have.value', defaultValue);
     });
   });

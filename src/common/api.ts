@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {Observable, forkJoin, of} from 'rxjs';
 import {map, catchError} from 'rxjs/operators';
 import {environment} from '../environments/environment';
+import {AuthService} from './auth';
 import {Competition, RawCompetition, CompetitionsApiResponse, WCIF, WcaApiResult} from './types';
 
 @Injectable({
@@ -11,6 +12,7 @@ import {Competition, RawCompetition, CompetitionsApiResponse, WCIF, WcaApiResult
 export class ApiService {
 
   private httpClient = inject(HttpClient);
+  private authService = inject(AuthService);
   private headerParams: HttpHeaders;
 
   private ONE_YEAR = 365;
@@ -82,7 +84,15 @@ export class ApiService {
   }
 
   getWcif(competitionId: string): Observable<WCIF> {
-    return this.httpClient.get<WCIF>(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif/public`);
+    const token = this.authService.accessToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+    return this.httpClient.get<WCIF>(`${environment.wcaUrl}/api/v0/competitions/${competitionId}/wcif/`, {headers});
   }
 
   getResults(competitionId: string): Observable<WcaApiResult[]> {
