@@ -607,9 +607,43 @@ textarea {
 
 /* Template save/load actions */
 .template-actions {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.template-actions h3 {
+  color: var(--accent-primary);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+}
+
+.template-actions .template-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.template-actions .template-message-success { color: var(--success-color); }
+.template-actions .template-message-info { color: var(--text-muted); }
+.template-actions .template-message-error { color: var(--error-color); }
+
+.template-actions [data-cy="template-message"] {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+/* Field labels */
+.field-label {
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.field-label-inline {
+  color: var(--text-secondary);
+  min-width: 120px;
 }
 
 .flex-wrap {

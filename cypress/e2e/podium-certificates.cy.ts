@@ -11,7 +11,7 @@ describe('Podium Certificates Tab', () => {
       fixture: 'competitions-gb.json'
     }).as('getUKCompetitions');
 
-    cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
       fixture: 'wcif.json'
     }).as('getWcif');
 
@@ -73,7 +73,7 @@ describe('Podium Certificates Tab', () => {
 
   it('should refresh data when clicking Refresh Data button', () => {
     // Add delay to see refreshing state
-    cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
       fixture: 'wcif.json',
       delay: 500
     }).as('getWcifDelayed');

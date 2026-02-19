@@ -132,6 +132,35 @@
           </div>
         </div>
 
+        <!-- Saved Templates -->
+        <div class="template-actions">
+          <h3>Saved Templates</h3>
+          <p class="template-hint">Background images are not included in saved templates.</p>
+
+          <div class="flex gap-4 flex-wrap items-center">
+            <button class="btn-secondary" (click)="loadTemplateFromServer()" [disabled]="reloadingTemplate" data-cy="load-template">
+              @if (reloadingTemplate) {
+                Loading...
+              } @else {
+                Load Saved Template
+              }
+            </button>
+
+            <button class="btn-primary" (click)="saveTemplate()" [disabled]="!authService.isLoggedIn() || savingTemplate" data-cy="save-template"
+                    [title]="authService.isLoggedIn() ? '' : 'Log in with WCA to save templates'">
+              @if (savingTemplate) {
+                Saving...
+              } @else {
+                Save Template on WCA
+              }
+            </button>
+          </div>
+
+          @if (templateMessage) {
+            <div class="template-message-{{ templateMessage.type }}" data-cy="template-message">{{ templateMessage.text }}</div>
+          }
+        </div>
+
         <!-- Tabs -->
         <mat-tab-group>
 
@@ -199,23 +228,23 @@
 
               <!-- Template Configuration -->
               <div class="mb-4">
-                <label for="podium-template" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Certificate Template:</label>
+                <label for="podium-template" class="field-label">Certificate Template:</label>
                 <textarea id="podium-template" [(ngModel)]="printService.podiumCertificateJson"
                           placeholder="Certificate template JSON..."></textarea>
-                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateJson()">Reset Certificate Template</button>
+                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateJson()">Reset to Default Template</button>
               </div>
 
               <div class="mb-4">
-                <label for="podium-style" style="color: var(--text-secondary); display: block; margin-bottom: 8px;">Style Configuration:</label>
+                <label for="podium-style" class="field-label">Style Configuration:</label>
                 <textarea id="podium-style" [(ngModel)]="printService.podiumCertificateStyleJson"
                           placeholder="Style configuration JSON..."></textarea>
-                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateStyleJson()">Reset Style Configuration</button>
+                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateStyleJson()">Reset to Default Style</button>
               </div>
 
               <!-- Additional Options -->
               <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-4">
-                  <label for="podium-background" style="color: var(--text-secondary); min-width: 120px;">Background:</label>
+                  <label for="podium-background" class="field-label-inline">Background:</label>
                   <input id="podium-background" #backgroundFileInput type="file" (change)="printService.handleBackgroundSelected($event.target.files)"/>
                   @if (printService.background) {
                     <label for="backgroundForPreview">For preview only</label>
@@ -235,7 +264,7 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <label for="podium-orientation" style="color: var(--text-secondary); min-width: 120px;">Orientation:</label>
+                  <label for="podium-orientation" class="field-label-inline">Orientation:</label>
                   <select id="podium-orientation" [(ngModel)]='printService.pageOrientation' style="max-width: 150px;">
                     <option value='landscape'>Landscape</option>
                     <option value='portrait'>Portrait</option>
@@ -243,7 +272,7 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <label for="podium-countries" style="color: var(--text-secondary); min-width: 120px;">Countries filter:</label>
+                  <label for="podium-countries" class="field-label-inline">Countries filter:</label>
                   <input id="podium-countries" [(ngModel)]='printService.countries'
                          type="text"
                          placeholder="ISO codes (semicolon-separated)"
@@ -251,7 +280,7 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <label for="podium-xoffset" style="color: var(--text-secondary); min-width: 120px;">X Offset:</label>
+                  <label for="podium-xoffset" class="field-label-inline">X Offset:</label>
                   <input id="podium-xoffset" [(ngModel)]='printService.xOffset'
                          type="number"
                          placeholder="0"
@@ -260,39 +289,6 @@
                 </div>
               </div>
 
-              <!-- Template Save/Load -->
-              <div class="template-actions">
-                <h3 style="color: var(--accent-primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px 0;">Saved Templates</h3>
-                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">Background images are not included in saved templates.</p>
-
-                <div class="flex gap-4 flex-wrap items-center">
-                  @if (wcif && templateExtensionService.hasTemplate(wcif)) {
-                    <button class="btn-secondary" (click)="loadTemplate()" data-cy="load-template">Load Saved Template</button>
-                  }
-
-                  @if (authService.isLoggedIn()) {
-                    <button class="btn-primary" (click)="saveTemplate()" [disabled]="savingTemplate" data-cy="save-template">
-                      @if (savingTemplate) {
-                        Saving...
-                      } @else {
-                        Save Template to Competition
-                      }
-                    </button>
-                  } @else {
-                    <span style="color: var(--text-muted); font-size: 12px;" data-cy="save-hint">Log in with WCA to save templates</span>
-                  }
-                </div>
-
-                @if (templateLoaded) {
-                  <div style="color: var(--success-color); margin-top: 8px; font-size: 12px;" data-cy="load-success">Template loaded successfully.</div>
-                }
-                @if (templateSaveSuccess) {
-                  <div style="color: var(--success-color); margin-top: 8px; font-size: 12px;" data-cy="save-success">Template saved successfully.</div>
-                }
-                @if (templateSaveError) {
-                  <div style="color: var(--error-color); margin-top: 8px; font-size: 12px;" data-cy="save-error">Error: {{ templateSaveError }}</div>
-                }
-              </div>
             </div>
           </mat-tab>
 

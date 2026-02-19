@@ -31,7 +31,7 @@ export class AppComponent {
   futureCompetitions: Competition[] = [];
   competitionId: string;
   customCompetitionId: string;
-  events: Event[];
+  events: Event[] = [];
   wcif: WCIF | null = null;
   error: string;
   loading: boolean;
@@ -42,9 +42,9 @@ export class AppComponent {
   templateExtensionService = inject(TemplateExtensionService);
 
   savingTemplate = false;
-  templateSaveSuccess = false;
-  templateSaveError: string | null = null;
-  templateLoaded = false;
+  reloadingTemplate = false;
+  templateMessage: { text: string; type: 'success' | 'info' | 'error' } | null = null;
+  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
       this.handleGetCompetitions();
@@ -92,15 +92,15 @@ export class AppComponent {
 
   handleCompetitionSelected(competitionId: string) {
     this.competitionId = competitionId;
-    this.loadWcif(this.competitionId);
+    this.loadWcif();
   }
 
   handleRefreshCompetition() {
     this.state = 'REFRESHING';
-    this.loadWcif(this.competitionId);
+    this.loadWcif();
   }
 
-  private loadWcif(_competitionId: string) {
+  private loadWcif() {
     this.loading = true;
     this.apiService.getWcif(this.competitionId).subscribe(wcif => {
       this.wcif = wcif;
@@ -152,6 +152,9 @@ export class AppComponent {
       });
 
       this.state = 'PRINT';
+
+      // Auto-load template if one is saved in the WCIF
+      this.autoLoadTemplate();
     } catch (error) {
       this.loading = false;
       console.error(error);
@@ -283,7 +286,6 @@ export class AppComponent {
   }
 
   private getPodiumPlaces(results: Result[]): Result[] {
-    // TODO This needs a test
     Helpers.sortResultsByRanking(results);
     const podiumPlaces = results.slice(0, 3);
     if (podiumPlaces.length === 3) {
@@ -354,28 +356,55 @@ export class AppComponent {
     this.authService.logout();
   }
 
-  loadTemplate(): void {
+  private showTemplateMessage(text: string, type: 'success' | 'info' | 'error', ms = 3000): void {
+    if (this.messageTimeout) clearTimeout(this.messageTimeout);
+    this.templateMessage = { text, type };
+    this.messageTimeout = setTimeout(() => this.templateMessage = null, ms);
+  }
+
+  private autoLoadTemplate(): void {
     if (this.wcif && this.templateExtensionService.loadTemplate(this.wcif)) {
-      this.templateLoaded = true;
-      setTimeout(() => this.templateLoaded = false, 3000);
+      this.showTemplateMessage('Saved template applied.', 'success');
     }
+  }
+
+  loadTemplateFromServer(): void {
+    if (!this.wcif || !this.competitionId) return;
+    this.reloadingTemplate = true;
+    this.templateMessage = null;
+    this.apiService.getWcif(this.competitionId).subscribe({
+      next: (wcif) => {
+        this.reloadingTemplate = false;
+        if (this.wcif) {
+          this.wcif.extensions = wcif.extensions;
+          if (this.templateExtensionService.loadTemplate(this.wcif)) {
+            this.showTemplateMessage('Template loaded successfully.', 'success');
+          } else {
+            this.showTemplateMessage('No saved template found for this competition.', 'info');
+          }
+        }
+      },
+      error: (err) => {
+        this.reloadingTemplate = false;
+        this.showTemplateMessage(err?.message || 'Failed to load template from server.', 'error', 5000);
+      }
+    });
   }
 
   saveTemplate(): void {
     if (!this.wcif || !this.competitionId) return;
+    if (!confirm('Save the current template to this competition on WCA?')) return;
     this.savingTemplate = true;
-    this.templateSaveSuccess = false;
-    this.templateSaveError = null;
+    this.templateMessage = null;
 
     this.templateExtensionService.saveTemplate(this.competitionId, this.wcif).subscribe({
       next: () => {
         this.savingTemplate = false;
-        this.templateSaveSuccess = true;
-        setTimeout(() => this.templateSaveSuccess = false, 3000);
+        this.showTemplateMessage('Template saved successfully.', 'success');
       },
       error: (err: { message?: string }) => {
         this.savingTemplate = false;
-        this.templateSaveError = err?.message || 'Failed to save template';
+        this.showTemplateMessage(err?.message || 'Failed to save template', 'error');
       }
     });
   }

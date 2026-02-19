@@ -7,7 +7,7 @@ import {AuthService} from './auth';
 import {PrintService} from './print';
 import {WCIF, WcifExtension, PodiumTemplateExtensionData} from './types';
 
-const EXTENSION_ID = 'io.github.speedcubing-ireland.podiumTemplate';
+const EXTENSION_ID = 'io.github.speedcubing_ireland.podiumTemplate';
 const SPEC_URL = 'https://github.com/speedcubing-ireland/wca-certificates';
 
 @Injectable({

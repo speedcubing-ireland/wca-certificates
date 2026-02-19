@@ -34,7 +34,7 @@ describe('Competition Selection', () => {
 
   it('should navigate to competition view when clicking a competition', () => {
     // Mock the WCIF API response
-    cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
       fixture: 'wcif.json'
     }).as('getWcif');
 
@@ -59,7 +59,7 @@ describe('Competition Selection', () => {
   });
 
   it('should load custom competition when ID is entered', () => {
-    cy.intercept('GET', '**/api/v0/competitions/CustomComp2024/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/CustomComp2024/wcif/', {
       fixture: 'wcif.json'
     }).as('getCustomWcif');
 
@@ -76,7 +76,7 @@ describe('Competition Selection', () => {
   });
 
   it('should display error message for invalid competition ID', () => {
-    cy.intercept('GET', '**/api/v0/competitions/InvalidComp/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/InvalidComp/wcif/', {
       statusCode: 404,
       body: { error: 'Competition not found' }
     }).as('getInvalidWcif');

@@ -91,6 +91,7 @@ npm test
 
 Runs unit tests in headless Chrome. Spec files live alongside their source files (`*.spec.ts`).
 
+
 ### End-to-End Testing (Cypress)
 
 The project uses [Cypress](https://www.cypress.io/) for end-to-end testing.
@@ -109,12 +110,13 @@ npm run cy:run
 npm run cy:open
 ```
 
-The test suite covers:
+The E2E test suite covers:
 - Competition selection and loading
 - Podium certificate generation
 - Certificate customization options
 - Template save/load via WCIF extensions
 - Tab navigation and error handling
+- Results API fallback when WCIF has no results
 
 ## Build & Deploy
 

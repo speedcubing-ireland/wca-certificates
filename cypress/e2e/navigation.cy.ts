@@ -10,7 +10,7 @@ describe('Navigation & Error States', () => {
       fixture: 'competitions-gb.json'
     }).as('getUKCompetitions');
 
-    cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+    cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
       fixture: 'wcif.json'
     }).as('getWcif');
   });
@@ -70,7 +70,7 @@ describe('Navigation & Error States', () => {
     });
 
     it('should display loading message when fetching WCIF', () => {
-      cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
         fixture: 'wcif.json',
         delay: 1000
       }).as('getWcifDelayed');
@@ -90,7 +90,7 @@ describe('Navigation & Error States', () => {
 
   describe('Error States', () => {
     it('should display error message when API call fails', () => {
-      cy.intercept('GET', '**/api/v0/competitions/*/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', {
         statusCode: 500,
         body: { error: 'Internal Server Error' }
       }).as('getWcifError');
@@ -106,7 +106,7 @@ describe('Navigation & Error States', () => {
     });
 
     it('should display error for non-existent competition', () => {
-      cy.intercept('GET', '**/api/v0/competitions/NonExistent/wcif/public', {
+      cy.intercept('GET', '**/api/v0/competitions/NonExistent/wcif/', {
         statusCode: 404,
         body: { error: 'Competition not found' }
       }).as('getWcifNotFound');

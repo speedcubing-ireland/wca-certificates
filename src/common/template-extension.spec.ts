@@ -7,7 +7,7 @@ import {PrintService} from './print';
 import {WCIF, WcifExtension, PodiumTemplateExtensionData} from './types';
 import {environment} from '../environments/environment';
 
-const EXTENSION_ID = 'io.github.speedcubing-ireland.podiumTemplate';
+const EXTENSION_ID = 'io.github.speedcubing_ireland.podiumTemplate';
 
 const CERTIFICATE_JSON = `[
 "\\n\\n\\n\\n\\n",

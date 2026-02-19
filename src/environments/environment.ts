@@ -2,9 +2,9 @@
 
 export const environment = {
   appUrl : 'http://localhost:4200/',
-  wcaUrl : 'https://www.worldcubeassociation.org',
+  wcaUrl : 'https://staging.worldcubeassociation.org',
 
-  wcaAppId : 'tD-v44Q8qGRld2jS67iebWooI1Eu3clJTw49gWErM7k',
+  wcaAppId : 'tTJ3kbmFE81eRoaqYYVXsc7rxdznrjnucdrTLVYkksg',
 
   version: 'local',
   testMode: true

@@ -157,7 +157,7 @@
   },
   "extensions": [
     {
-      "id": "io.github.speedcubing-ireland.podiumTemplate",
+      "id": "io.github.speedcubing_ireland.podiumTemplate",
       "specUrl": "https://github.com/speedcubing-ireland/wca-certificates",
       "data": {
         "podiumCertificateJson": "[\"Saved Template Content\"]",
