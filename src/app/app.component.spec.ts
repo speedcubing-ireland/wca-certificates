@@ -662,6 +662,48 @@ describe('AppComponent', () => {
     });
   });
 
+  describe('logout', () => {
+    it('should reset competition state when confirmed', () => {
+      spyOn(window, 'confirm').and.returnValue(true);
+      component.competitionId = 'Test2024';
+      component.wcif = makeWcif();
+      component.events = [makeEvent('333', [makeRound([])])];
+      component.error = 'some error';
+      component.loading = true;
+
+      component.logout();
+
+      expect(window.confirm).toHaveBeenCalled();
+      expect(component.competitionId).toBe('');
+      expect(component.wcif).toBeNull();
+      expect(component.events).toEqual([]);
+      expect(component.error).toBe('');
+      expect(component.loading).toBe(false);
+    });
+
+    it('should not reset state when confirm is cancelled', () => {
+      spyOn(window, 'confirm').and.returnValue(false);
+      component.competitionId = 'Test2024';
+      component.wcif = makeWcif();
+      component.events = [makeEvent('333', [makeRound([])])];
+
+      component.logout();
+
+      expect(component.competitionId).toBe('Test2024');
+      expect(component.wcif).not.toBeNull();
+      expect(component.events.length).toBe(1);
+    });
+
+    it('should clear auth token when confirmed', () => {
+      spyOn(window, 'confirm').and.returnValue(true);
+      localStorage.setItem('wca_access_token', 'fake-token');
+
+      component.logout();
+
+      expect(localStorage.getItem('wca_access_token')).toBeNull();
+    });
+  });
+
   describe('formatCompetitionDate', () => {
     it('should format single-day competition', () => {
       const comp: Competition = {

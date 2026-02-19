@@ -353,7 +353,13 @@ export class AppComponent {
   }
 
   logout(): void {
+    if (!confirm('Are you sure you want to log out?')) return;
     this.authService.logout();
+    this.competitionId = '';
+    this.wcif = null;
+    this.events = [];
+    this.error = '';
+    this.loading = false;
   }
 
   private showTemplateMessage(text: string, type: 'success' | 'info' | 'error', ms = 3000): void {

@@ -134,16 +134,21 @@ describe('Template Extension - Save', () => {
     cy.get('[data-cy="save-template"]').should('be.visible');
   });
 
-  it('should disable save button when not logged in', () => {
+  it('should return to login prompt when logging out from competition view', () => {
     cy.visit('/');
     cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
     cy.get('.competition').first().click();
     cy.wait('@getWcif');
     cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
 
-    // Log out to check that save button becomes disabled
+    // Log out (accept confirm dialog)
+    cy.on('window:confirm', () => true);
     cy.contains('button', 'Log Out (WCA)').click();
-    cy.get('[data-cy="save-template"]').should('be.visible').and('be.disabled');
+
+    // Should return to selection screen with login prompt
+    cy.get('.comp-interface').should('not.exist');
+    cy.get('.comp-selection').should('be.visible');
+    cy.contains('Please log in with your WCA account to access competitions').should('be.visible');
   });
 
   it('should not save when confirmation is cancelled', () => {
@@ -223,11 +228,13 @@ describe('Template Extension - Auth UI', () => {
     }).as('getUKCompetitions');
   });
 
-  it('should show Log In button when not logged in', () => {
+  it('should show Log In button and login prompt when not logged in', () => {
     window.localStorage.removeItem('wca_access_token');
     cy.visit('/');
     cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
     cy.contains('button', 'Log In (WCA)').should('be.visible');
+    cy.contains('Please log in with your WCA account to access competitions').should('be.visible');
+    cy.get('.competition').should('not.exist');
   });
 
   it('should show Log Out button when logged in', () => {
@@ -240,17 +247,33 @@ describe('Template Extension - Auth UI', () => {
     cy.contains('button', 'Log Out (WCA)').should('be.visible');
   });
 
-  it('should log out when Log Out button is clicked', () => {
+  it('should log out when Log Out button is clicked and confirmed', () => {
     cy.visit('/', {
       onBeforeLoad(win) {
         win.localStorage.setItem('wca_access_token', 'fake-token');
       }
     });
     cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+    cy.on('window:confirm', () => true);
     cy.contains('button', 'Log Out (WCA)').click();
     cy.contains('button', 'Log In (WCA)').should('be.visible');
     cy.window().then(win => {
       expect(win.localStorage.getItem('wca_access_token')).to.be.null;
+    });
+  });
+
+  it('should not log out when confirm dialog is cancelled', () => {
+    cy.visit('/', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('wca_access_token', 'fake-token');
+      }
+    });
+    cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+    cy.on('window:confirm', () => false);
+    cy.contains('button', 'Log Out (WCA)').click();
+    cy.contains('button', 'Log Out (WCA)').should('be.visible');
+    cy.window().then(win => {
+      expect(win.localStorage.getItem('wca_access_token')).to.equal('fake-token');
     });
   });
 });

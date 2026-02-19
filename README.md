@@ -20,9 +20,15 @@ Originally forked from https://github.com/Goosly/wca-certificates
 - Configurable page orientation (landscape/portrait)
 - X-offset adjustment for precise positioning
 
+### Authentication
+- WCA login is required to select and load competitions
+- Users are prompted to log in before accessing the competition list
+- Logging out returns the user to the competition selection screen with a login prompt
+- Logout requires confirmation to prevent accidental logouts
+
 ### Template Save/Load
 - Save certificate template settings to a WCA competition (requires WCA login with competition management permissions)
-- Load saved templates from any competition without logging in
+- Load saved templates from any competition
 - Uses the WCIF Extension mechanism for persistence
 
 ### Export Options
@@ -111,7 +117,8 @@ npm run cy:open
 ```
 
 The E2E test suite covers:
-- Competition selection and loading
+- Competition selection and login gate
+- Competition loading
 - Podium certificate generation
 - Certificate customization options
 - Template save/load via WCIF extensions
@@ -155,7 +162,7 @@ This pushes the `dist/wca-certificates` directory to the `gh-pages` branch.
 
 ## Template Save/Load (OAuth)
 
-The app supports saving and loading podium certificate templates to/from WCA competitions using the WCIF Extension mechanism. Loading saved templates works without authentication (uses the public WCIF endpoint). Saving requires logging in with a WCA account that has competition management permissions.
+The app requires WCA login to access competitions. Once logged in, users can save and load podium certificate templates to/from WCA competitions using the WCIF Extension mechanism. Saving requires a WCA account with competition management permissions.
 
 ### Testing OAuth locally
 

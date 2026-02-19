@@ -97,3 +97,37 @@ describe('Competition Selection', () => {
     cy.get('.footer a[href*="github.com"]').should('contain', 'Source Code');
   });
 });
+
+describe('Competition Selection - Login Gate', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/IE.json', {
+      fixture: 'competitions.json'
+    }).as('getIrishCompetitions');
+
+    cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/GB.json', {
+      fixture: 'competitions-gb.json'
+    }).as('getUKCompetitions');
+  });
+
+  it('should hide competition list and show login prompt when not logged in', () => {
+    window.localStorage.removeItem('wca_access_token');
+    cy.visit('/');
+    cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+
+    cy.get('.comp-selection').should('be.visible');
+    cy.get('h2').should('contain', 'Select Competition');
+    cy.contains('Please log in with your WCA account to access competitions').should('be.visible');
+    cy.get('.competition').should('not.exist');
+    cy.get('input[placeholder="Enter competition ID"]').should('not.exist');
+  });
+
+  it('should show competition list when logged in', () => {
+    cy.visit('/');
+    cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+
+    cy.get('.comp-selection').should('be.visible');
+    cy.contains('Please log in with your WCA account to access competitions').should('not.exist');
+    cy.get('.comp-category').should('have.length.at.least', 1);
+    cy.get('input[placeholder="Enter competition ID"]').should('be.visible');
+  });
+});
