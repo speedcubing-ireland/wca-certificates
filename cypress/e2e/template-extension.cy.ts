@@ -25,11 +25,14 @@ describe('Template Extension - Auto-load', () => {
     // Template should be auto-loaded with distinct message
     cy.get('[data-cy="template-message"]').should('contain', 'Saved template applied.');
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-    cy.get('textarea#podium-template').should('have.value', '["Saved Template Content"]');
+    // Visual editor should show elements from saved template
+    cy.get('[data-cy="visual-element"]').should('have.length', 4);
+    // Check that saved template values are applied (fontSize 36 from fixture)
+    cy.get('[data-cy="visual-element"]').first().click();
+    cy.get('[data-cy="element-font-size"]').should('have.value', '36');
     cy.get('textarea#podium-style').should('have.value', '{"font": "mono"}');
     cy.get('#podium-orientation').should('have.value', 'portrait');
     cy.get('input#podium-countries').should('have.value', 'IE');
-    cy.get('input#podium-xoffset').should('have.value', '25');
   });
 
   it('should keep default template when competition has no saved template', () => {
@@ -45,9 +48,10 @@ describe('Template Extension - Auto-load', () => {
 
     // No auto-load message should appear
     cy.get('[data-cy="template-message"]').should('not.exist');
-    // Default template should contain the standard certificate placeholders
+    // Default visual elements should be present with placeholder text
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-    cy.get('textarea#podium-template').invoke('val').should('contain', 'certificate.');
+    cy.get('[data-cy="visual-element"]').should('have.length', 4);
+    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3 Cube');
     cy.get('#podium-orientation').should('have.value', 'landscape');
   });
 });
@@ -101,7 +105,10 @@ describe('Template Extension - Load from Server', () => {
 
     cy.get('[data-cy="template-message"]').should('be.visible');
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-    cy.get('textarea#podium-template').should('have.value', '["Saved Template Content"]');
+    // Visual editor should show elements from the loaded template
+    cy.get('[data-cy="visual-element"]').should('have.length', 4);
+    cy.get('[data-cy="visual-element"]').first().click();
+    cy.get('[data-cy="element-font-size"]').should('have.value', '36');
   });
 });
 

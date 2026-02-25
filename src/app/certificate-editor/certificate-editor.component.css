@@ -1,0 +1,114 @@
+.editor-container {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.preview-page {
+  position: relative;
+  background-color: #1a1a2e;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border-color, #374151);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: default;
+}
+
+.visual-element {
+  position: absolute;
+  color: #ffffff;
+  cursor: move;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.visual-element-text {
+  display: inline-block;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border: 1px dashed transparent;
+  border-radius: 2px;
+  transition: border-color 0.15s ease;
+}
+
+.visual-element:hover .visual-element-text {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.visual-element.selected .visual-element-text {
+  border-color: var(--accent-primary, #00d4ff);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+/* CDK drag preview */
+.visual-element.cdk-drag-dragging {
+  opacity: 0.8;
+}
+
+.visual-element.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.controls-panel {
+  width: 360px;
+  flex-shrink: 0;
+  background: var(--bg-tertiary, #1f2937);
+  border: 1px solid var(--border-color, #374151);
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.controls-panel h4 {
+  margin: 0 0 12px 0;
+  color: var(--accent-primary, #00d4ff);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.control-row label {
+  color: var(--text-secondary, #9ca3af);
+  min-width: 100px;
+  font-size: 12px;
+}
+
+.control-row input[type="text"] {
+  flex: 1;
+  background: var(--bg-secondary, #111827);
+  border: 1px solid var(--border-color, #374151);
+  color: var(--text-primary, #e5e7eb);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.control-row input[type="number"] {
+  width: 80px;
+  background: var(--bg-secondary, #111827);
+  border: 1px solid var(--border-color, #374151);
+  color: var(--text-primary, #e5e7eb);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.control-row input[type="checkbox"] {
+  accent-color: var(--accent-primary, #00d4ff);
+}
+
+.control-row.coordinates {
+  gap: 24px;
+  color: var(--text-muted, #6b7280);
+  font-size: 11px;
+}

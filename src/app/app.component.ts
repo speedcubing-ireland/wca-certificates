@@ -11,7 +11,9 @@ import {Result} from '@wca/helpers/lib/models/result';
 import {Person} from '@wca/helpers';
 import {Helpers} from '../common/helpers';
 import { environment } from '../environments/environment';
-import { Competition, WCIF, WcaApiResult } from '../common/types';
+import { Competition, WCIF, WcaApiResult, VisualElement } from '../common/types';
+import { CertificateEditorComponent } from './certificate-editor/certificate-editor.component';
+import { DEFAULT_VISUAL_ELEMENTS, isVisualFormat, convertLegacyTemplate } from '../common/print';
 
 @Component({
     selector: 'app-root',
@@ -19,7 +21,7 @@ import { Competition, WCIF, WcaApiResult } from '../common/types';
     styleUrls: ['./app.component.css'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [CommonModule, FormsModule, MatTabsModule]
+    imports: [CommonModule, FormsModule, MatTabsModule, CertificateEditorComponent]
 })
 export class AppComponent {
   state: 'PRINT' | 'REFRESHING' = 'PRINT';
@@ -40,6 +42,8 @@ export class AppComponent {
   printService = inject(PrintService);
   authService = inject(AuthService);
   templateExtensionService = inject(TemplateExtensionService);
+
+  visualElements: VisualElement[] = DEFAULT_VISUAL_ELEMENTS.map(el => ({...el}));
 
   savingTemplate = false;
   reloadingTemplate = false;
@@ -238,6 +242,16 @@ export class AppComponent {
     }
   }
 
+  onVisualElementsChange(elements: VisualElement[]): void {
+    this.visualElements = elements;
+    this.printService.podiumCertificateJson = JSON.stringify(elements, null, 2);
+  }
+
+  resetVisualElements(): void {
+    this.visualElements = DEFAULT_VISUAL_ELEMENTS.map(el => ({...el}));
+    this.printService.podiumCertificateJson = JSON.stringify(DEFAULT_VISUAL_ELEMENTS, null, 2);
+  }
+
   printCertificatesAsPdf() {
     this.printService.printCertificatesAsPdf(this.wcif, this.getSelectedEvents());
   }
@@ -370,7 +384,20 @@ export class AppComponent {
 
   private autoLoadTemplate(): void {
     if (this.wcif && this.templateExtensionService.loadTemplate(this.wcif)) {
+      this.syncVisualElementsFromJson();
       this.showTemplateMessage('Saved template applied.', 'success');
+    }
+  }
+
+  private syncVisualElementsFromJson(): void {
+    const json = this.printService.podiumCertificateJson;
+    if (isVisualFormat(json)) {
+      this.visualElements = JSON.parse(json);
+    } else {
+      // Legacy format — auto-convert
+      this.visualElements = convertLegacyTemplate(json, this.printService.xOffset);
+      this.printService.podiumCertificateJson = JSON.stringify(this.visualElements, null, 2);
+      this.printService.xOffset = 0;
     }
   }
 
@@ -384,6 +411,7 @@ export class AppComponent {
         if (this.wcif) {
           this.wcif.extensions = wcif.extensions;
           if (this.templateExtensionService.loadTemplate(this.wcif)) {
+            this.syncVisualElementsFromJson();
             this.showTemplateMessage('Template loaded successfully.', 'success');
           } else {
             this.showTemplateMessage('No saved template found for this competition.', 'info');

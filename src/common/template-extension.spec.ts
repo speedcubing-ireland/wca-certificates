@@ -322,4 +322,60 @@ describe('TemplateExtensionService', () => {
       expect(() => service.saveTemplate('TestComp2024', wcif)).toThrowError('Not authenticated');
     });
   });
+
+  describe('visual-format templates', () => {
+    const VISUAL_JSON = JSON.stringify([
+      {id: 'event', text: 'certificate.event', x: 421, y: 200, fontSize: 36, bold: true},
+      {id: 'name', text: 'certificate.name', x: 421, y: 340, fontSize: 36, bold: true},
+    ]);
+
+    it('should correctly save and load new visual-format templates', () => {
+      mockPrintService.podiumCertificateJson = VISUAL_JSON;
+      mockPrintService.xOffset = 0;
+
+      const ext = service.buildExtension();
+      const data = ext.data as unknown as PodiumTemplateExtensionData;
+      expect(data.podiumCertificateJson).toBe(VISUAL_JSON);
+      expect(data.xOffset).toBe(0);
+
+      // Simulate loading back
+      mockPrintService.podiumCertificateJson = '';
+      service.applyTemplate(data);
+      expect(mockPrintService.podiumCertificateJson).toBe(VISUAL_JSON);
+    });
+
+    it('should handle loading an old-format template (backward compat)', () => {
+      const oldFormatData = makeTemplateData({
+        podiumCertificateJson: CERTIFICATE_JSON,
+        xOffset: 15
+      });
+
+      service.applyTemplate(oldFormatData);
+
+      // applyTemplate just sets the values — the caller (AppComponent) handles conversion
+      expect(mockPrintService.podiumCertificateJson).toBe(CERTIFICATE_JSON);
+      expect(mockPrintService.xOffset).toBe(15);
+    });
+
+    it('should round-trip visual format through save and load', () => {
+      mockPrintService.podiumCertificateJson = VISUAL_JSON;
+      mockPrintService.podiumCertificateStyleJson = '{"font": "mono"}';
+      mockPrintService.pageOrientation = 'landscape';
+      mockPrintService.backgroundForPreviewOnly = true;
+      mockPrintService.countries = 'IE;GB';
+      mockPrintService.xOffset = 0;
+
+      const ext = service.buildExtension();
+      const wcif = makeWcif([ext]);
+
+      // Clear and reload
+      mockPrintService.podiumCertificateJson = '';
+      mockPrintService.countries = '';
+      const loaded = service.loadTemplate(wcif);
+
+      expect(loaded).toBeTrue();
+      expect(mockPrintService.podiumCertificateJson).toBe(VISUAL_JSON);
+      expect(mockPrintService.countries).toBe('IE;GB');
+    });
+  });
 });

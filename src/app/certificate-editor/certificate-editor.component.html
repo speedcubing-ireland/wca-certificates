@@ -1,0 +1,63 @@
+<div class="editor-container">
+  <!-- Preview Area -->
+  <div class="preview-page"
+       [style.width.px]="700"
+       [style.height.px]="previewHeight"
+       [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'"
+       (click)="deselectAll()"
+       data-cy="preview-area">
+
+    @for (el of elements; track el.id) {
+      <div class="visual-element"
+           cdkDrag
+           [cdkDragFreeDragPosition]="{x: 0, y: 0}"
+           (cdkDragEnded)="onDragEnded($event, el)"
+           (click)="selectElement(el.id, $event)"
+           [class.selected]="selectedElementId === el.id"
+           [style.left.px]="el.x * scale"
+           [style.top.px]="el.y * scale"
+           [style.fontSize.px]="el.fontSize * scale"
+           [style.fontWeight]="el.bold ? 'bold' : 'normal'"
+           data-cy="visual-element">
+        <span class="visual-element-text">{{ resolvePreviewText(el.text) }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Controls Panel -->
+  @if (selectedElement) {
+    <div class="controls-panel" data-cy="controls-panel">
+      <h4>Edit Element: {{ selectedElement.id }}</h4>
+
+      <div class="control-row">
+        <label>Text template:</label>
+        <input type="text"
+               [ngModel]="selectedElement.text"
+               (ngModelChange)="onTextChange($event)"
+               data-cy="element-text-input">
+      </div>
+
+      <div class="control-row">
+        <label>Font size:</label>
+        <input type="number"
+               [ngModel]="selectedElement.fontSize"
+               (ngModelChange)="onFontSizeChange($event)"
+               min="8" max="120"
+               data-cy="element-font-size">
+      </div>
+
+      <div class="control-row">
+        <label>Bold:</label>
+        <input type="checkbox"
+               [ngModel]="selectedElement.bold"
+               (ngModelChange)="onBoldChange($event)"
+               data-cy="element-bold">
+      </div>
+
+      <div class="control-row coordinates">
+        <span>x: {{ selectedElement.x | number:'1.0-0' }}pt</span>
+        <span>y: {{ selectedElement.y | number:'1.0-0' }}pt</span>
+      </div>
+    </div>
+  }
+</div>
