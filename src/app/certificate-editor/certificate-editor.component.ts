@@ -1,7 +1,7 @@
 import {Component, Input, Output, EventEmitter} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {CdkDrag, CdkDragEnd} from '@angular/cdk/drag-drop';
+import {CdkDrag, CdkDragEnd, CdkDragHandle} from '@angular/cdk/drag-drop';
 import {VisualElement} from '../../common/types';
 
 const PDF_LANDSCAPE_WIDTH = 842;
@@ -14,13 +14,13 @@ const SAMPLE_VALUES: Record<string, string> = {
   'certificate.delegate': 'John Smith',
   'certificate.organizers': 'Jane Doe and Bob Wilson',
   'certificate.competitionName': 'Example Open 2025',
-  'certificate.name': 'John Doe',
+  'certificate.name': 'Patrick Roger Smith',
   'certificate.capitalisedPlace': 'First',
   'certificate.place': 'first',
-  'certificate.event': '3x3x3 Cube',
+  'certificate.event': '3x3x3',
   'certificate.resultType': 'an average',
   'certificate.resultUnit': '',
-  'certificate.result': '1:23.45',
+  'certificate.result': '7.64',
   'certificate.locationAndDate': '',
 };
 
@@ -29,7 +29,7 @@ const SAMPLE_VALUES: Record<string, string> = {
   templateUrl: './certificate-editor.component.html',
   styleUrls: ['./certificate-editor.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, CdkDrag],
+  imports: [CommonModule, FormsModule, CdkDrag, CdkDragHandle],
 })
 export class CertificateEditorComponent {
   @Input() orientation: 'landscape' | 'portrait' = 'landscape';

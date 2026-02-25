@@ -347,10 +347,10 @@ describe('PrintService', () => {
       return cert;
     }
 
-    it('should generate content with absolutePosition for each element', () => {
+    it('should generate content with absolutePosition matching element x and y', () => {
       const elements: VisualElement[] = [
         {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true},
-        {id: 'name', text: 'certificate.name', x: 421, y: 320, fontSize: 40, bold: true},
+        {id: 'name', text: 'certificate.name', x: 300, y: 320, fontSize: 40, bold: true},
       ];
       service.podiumCertificateJson = JSON.stringify(elements);
       service.pageOrientation = 'landscape';
@@ -359,10 +359,10 @@ describe('PrintService', () => {
       const result = service.getOneCertificateContentFromVisualElements(cert);
 
       expect(result.length).toBe(2);
-      expect(result[0].absolutePosition).toEqual({x: 0, y: 180});
+      expect(result[0].absolutePosition).toEqual({x: 421, y: 180});
       expect(result[0].fontSize).toBe(40);
       expect(result[0].bold).toBeTrue();
-      expect(result[1].absolutePosition).toEqual({x: 0, y: 320});
+      expect(result[1].absolutePosition).toEqual({x: 300, y: 320});
     });
 
     it('should replace certificate placeholders in element text', () => {
@@ -380,7 +380,7 @@ describe('PrintService', () => {
       expect(result[1].text).toBe('Max Solver');
     });
 
-    it('should use alignment center with margin-based offset', () => {
+    it('should not set alignment or width', () => {
       const elements: VisualElement[] = [
         {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true},
       ];
@@ -390,55 +390,8 @@ describe('PrintService', () => {
       const cert = makeCertificate();
       const result = service.getOneCertificateContentFromVisualElements(cert);
 
-      expect(result[0].alignment).toBe('center');
-      expect(result[0].width).toBe(842);
-    });
-
-    it('should use portrait page width (595) for portrait orientation', () => {
-      const elements: VisualElement[] = [
-        {id: 'event', text: 'certificate.event', x: 297.5, y: 200, fontSize: 36, bold: true},
-      ];
-      service.podiumCertificateJson = JSON.stringify(elements);
-      service.pageOrientation = 'portrait';
-
-      const cert = makeCertificate();
-      const result = service.getOneCertificateContentFromVisualElements(cert);
-
-      expect(result[0].width).toBe(595);
-      expect(result[0].absolutePosition).toEqual({x: 0, y: 200});
-      // margin: [297.5 - 595/2, 0, 595/2 - 297.5, 0] = [0, 0, 0, 0]
-      expect(result[0].margin).toEqual([0, 0, 0, 0]);
-    });
-
-    it('should produce asymmetric margins when element x is off-center', () => {
-      const elements: VisualElement[] = [
-        {id: 'event', text: 'certificate.event', x: 300, y: 180, fontSize: 40, bold: true},
-      ];
-      service.podiumCertificateJson = JSON.stringify(elements);
-      service.pageOrientation = 'landscape';
-
-      const cert = makeCertificate();
-      const result = service.getOneCertificateContentFromVisualElements(cert);
-
-      // pageWidth = 842, center = 421
-      // margin: [300 - 421, 0, 421 - 300, 0] = [-121, 0, 121, 0]
-      expect(result[0].margin).toEqual([300 - 421, 0, 421 - 300, 0]);
-    });
-
-    it('should produce correct margins for off-center element in portrait', () => {
-      const elements: VisualElement[] = [
-        {id: 'name', text: 'certificate.name', x: 400, y: 300, fontSize: 32, bold: true},
-      ];
-      service.podiumCertificateJson = JSON.stringify(elements);
-      service.pageOrientation = 'portrait';
-
-      const cert = makeCertificate();
-      const result = service.getOneCertificateContentFromVisualElements(cert);
-
-      // pageWidth = 595, center = 297.5
-      // margin: [400 - 297.5, 0, 297.5 - 400, 0] = [102.5, 0, -102.5, 0]
-      expect(result[0].width).toBe(595);
-      expect(result[0].margin).toEqual([400 - 595 / 2, 0, 595 / 2 - 400, 0]);
+      expect(result[0].alignment).toBeUndefined();
+      expect(result[0].width).toBeUndefined();
     });
   });
 

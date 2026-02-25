@@ -55,9 +55,9 @@ describe('CertificateEditorComponent', () => {
     it('should display all visual elements with resolved placeholder text', () => {
       const elementDivs = fixture.nativeElement.querySelectorAll('[data-cy="visual-element"]');
       expect(elementDivs.length).toBe(4);
-      expect(elementDivs[0].textContent.trim()).toContain('3x3x3 Cube');
+      expect(elementDivs[0].textContent.trim()).toContain('3x3x3');
       expect(elementDivs[1].textContent.trim()).toContain('First Place');
-      expect(elementDivs[2].textContent.trim()).toContain('John Doe');
+      expect(elementDivs[2].textContent.trim()).toContain('Patrick Roger Smith');
       expect(elementDivs[3].textContent.trim()).toContain('an average');
     });
 
@@ -92,11 +92,14 @@ describe('CertificateEditorComponent', () => {
       expect(controlsPanel).toBeTruthy();
     });
 
-    it('should not show controls panel when no element is selected', () => {
+    it('should show hint text when no element is selected', () => {
       component.selectedElementId = null;
       fixture.detectChanges();
       const controlsPanel = fixture.nativeElement.querySelector('[data-cy="controls-panel"]');
-      expect(controlsPanel).toBeFalsy();
+      expect(controlsPanel).toBeTruthy();
+      const hint = controlsPanel.querySelector('.hint-text');
+      expect(hint).toBeTruthy();
+      expect(hint.textContent).toContain('Click an element');
     });
 
     it('should deselect all when clicking the preview area', () => {
@@ -181,13 +184,13 @@ describe('CertificateEditorComponent', () => {
 
   describe('resolvePreviewText', () => {
     it('should replace certificate placeholders with sample values', () => {
-      expect(component.resolvePreviewText('certificate.event')).toBe('3x3x3 Cube');
-      expect(component.resolvePreviewText('certificate.name')).toBe('John Doe');
+      expect(component.resolvePreviewText('certificate.event')).toBe('3x3x3');
+      expect(component.resolvePreviewText('certificate.name')).toBe('Patrick Roger Smith');
     });
 
     it('should handle text with multiple placeholders', () => {
       const result = component.resolvePreviewText('with certificate.resultType of certificate.result');
-      expect(result).toBe('with an average of 1:23.45');
+      expect(result).toBe('with an average of 7.64');
     });
 
     it('should replace certificate.capitalisedPlace before certificate.place', () => {

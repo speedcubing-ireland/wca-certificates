@@ -126,6 +126,7 @@ export interface PdfContentItem {
   margin?: number[];
   pageBreak?: string;
   columns?: PdfContentItem[];
+  stack?: PdfContentItem[];
   width?: string | number;
   style?: string;
   table?: unknown;

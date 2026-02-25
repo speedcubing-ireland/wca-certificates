@@ -13,10 +13,10 @@ import {environment} from '../environments/environment';
 declare const pdfMake: PdfMakeStatic;
 
 export const DEFAULT_VISUAL_ELEMENTS: VisualElement[] = [
-  { id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true },
-  { id: 'place', text: 'certificate.capitalisedPlace Place', x: 421, y: 240, fontSize: 32, bold: true },
-  { id: 'name', text: 'certificate.name', x: 421, y: 320, fontSize: 40, bold: true },
-  { id: 'result', text: 'with certificate.resultType of certificate.result certificate.resultUnit', x: 421, y: 400, fontSize: 22, bold: false },
+  { id: 'event', text: 'certificate.event', x: 280, y: 180, fontSize: 40, bold: true },
+  { id: 'place', text: 'certificate.capitalisedPlace Place', x: 280, y: 240, fontSize: 32, bold: true },
+  { id: 'name', text: 'certificate.name', x: 280, y: 320, fontSize: 40, bold: true },
+  { id: 'result', text: 'with certificate.resultType of certificate.result certificate.resultUnit', x: 280, y: 400, fontSize: 22, bold: false },
 ];
 
 export function isVisualFormat(json: string): boolean {
@@ -230,10 +230,7 @@ export class PrintService {
         text: resolvedText,
         fontSize: el.fontSize,
         bold: el.bold,
-        absolutePosition: { x: 0, y: el.y },
-        width: pageWidth,
-        alignment: 'center',
-        margin: [el.x - pageWidth / 2, 0, pageWidth / 2 - el.x, 0],
+        absolutePosition: { x: el.x, y: el.y },
       } as PdfContentItem;
     });
   }
@@ -288,7 +285,6 @@ export class PrintService {
         const items = this.getOneCertificateContentFromVisualElements(cert);
         items.forEach(item => document.content.push(item));
         if (i < certificates.length - 1) {
-          // Add page break after each certificate except last
           document.content.push({ text: '', pageBreak: 'after' });
         }
       });

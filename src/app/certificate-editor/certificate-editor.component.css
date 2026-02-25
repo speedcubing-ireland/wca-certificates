@@ -7,6 +7,8 @@
 
 .preview-page {
   position: relative;
+  width: 700px;
+  flex-shrink: 0;
   background-color: #1a1a2e;
   background-size: cover;
   background-position: center;
@@ -19,18 +21,18 @@
 .visual-element {
   position: absolute;
   color: #ffffff;
-  cursor: move;
   white-space: nowrap;
   user-select: none;
 }
 
 .visual-element-text {
   display: inline-block;
-  transform: translateX(-50%);
   padding: 2px 6px;
+  margin: -3px -7px;
   border: 1px dashed transparent;
   border-radius: 2px;
   transition: border-color 0.15s ease;
+  cursor: move;
 }
 
 .visual-element:hover .visual-element-text {
@@ -111,4 +113,15 @@
   gap: 24px;
   color: var(--text-muted, #6b7280);
   font-size: 11px;
+}
+
+.element-name {
+  color: var(--text-primary, #e5e7eb);
+  font-size: 12px;
+}
+
+.hint-text {
+  color: var(--text-muted, #6b7280);
+  font-size: 12px;
+  margin: 0;
 }

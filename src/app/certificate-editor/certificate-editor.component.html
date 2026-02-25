@@ -19,15 +19,20 @@
            [style.fontSize.px]="el.fontSize * scale"
            [style.fontWeight]="el.bold ? 'bold' : 'normal'"
            data-cy="visual-element">
-        <span class="visual-element-text">{{ resolvePreviewText(el.text) }}</span>
+        <span class="visual-element-text" cdkDragHandle>{{ resolvePreviewText(el.text) }}</span>
       </div>
     }
   </div>
 
   <!-- Controls Panel -->
-  @if (selectedElement) {
-    <div class="controls-panel" data-cy="controls-panel">
-      <h4>Edit Element: {{ selectedElement.id }}</h4>
+  <div class="controls-panel" data-cy="controls-panel">
+    <h4>Edit Element</h4>
+
+    @if (selectedElement) {
+      <div class="control-row">
+        <label>Element:</label>
+        <span class="element-name">{{ selectedElement.id }}</span>
+      </div>
 
       <div class="control-row">
         <label>Text template:</label>
@@ -58,6 +63,8 @@
         <span>x: {{ selectedElement.x | number:'1.0-0' }}pt</span>
         <span>y: {{ selectedElement.y | number:'1.0-0' }}pt</span>
       </div>
-    </div>
-  }
+    } @else {
+      <p class="hint-text">Click an element in the preview to edit it.</p>
+    }
+  </div>
 </div>
