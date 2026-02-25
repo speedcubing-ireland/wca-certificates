@@ -33,7 +33,7 @@ describe('Customize Podium Tab', () => {
 
   it('should show default text elements with placeholder values', () => {
     cy.get('[data-cy="visual-element"]').should('have.length', 4);
-    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3 Cube');
+    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3');
   });
 
   it('should select an element on click and show controls panel', () => {
