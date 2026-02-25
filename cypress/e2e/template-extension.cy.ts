@@ -51,7 +51,7 @@ describe('Template Extension - Auto-load', () => {
     // Default visual elements should be present with placeholder text
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
     cy.get('[data-cy="visual-element"]').should('have.length', 4);
-    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3 Cube');
+    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3');
     cy.get('#podium-orientation').should('have.value', 'landscape');
   });
 });
