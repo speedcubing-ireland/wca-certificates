@@ -234,13 +234,16 @@
           <mat-tab label="Customize Podium">
             <div class="p-4">
 
-
-              <!-- Template Configuration -->
+              <!-- Visual Editor -->
               <div class="mb-4">
-                <label for="podium-template" class="field-label">Certificate Template:</label>
-                <textarea id="podium-template" [(ngModel)]="printService.podiumCertificateJson"
-                          placeholder="Certificate template JSON..."></textarea>
-                <button class="btn-secondary" style="margin-left: 8px;" (click)="printService.resetPodiumCertificateJson()">Reset to Default Template</button>
+                <label class="field-label">Certificate Layout:</label>
+                <app-certificate-editor
+                  [orientation]="printService.pageOrientation"
+                  [backgroundImage]="printService.background"
+                  [elements]="visualElements"
+                  (elementsChange)="onVisualElementsChange($event)">
+                </app-certificate-editor>
+                <button class="btn-secondary" style="margin-top: 8px;" (click)="resetVisualElements()" data-cy="reset-layout">Reset to Default Layout</button>
               </div>
 
               <div class="mb-4">
@@ -257,7 +260,7 @@
                   <input id="podium-background" #backgroundFileInput type="file" (change)="printService.handleBackgroundSelected($event.target.files)"/>
                   @if (printService.background) {
                     <label for="backgroundForPreview">For preview only</label>
-                    <input id="backgroundForPreview" 
+                    <input id="backgroundForPreview"
                                  type="checkbox"
                                  class="event-checkbox"
                                  [(ngModel)]="printService.backgroundForPreviewOnly"
@@ -286,15 +289,6 @@
                          type="text"
                          placeholder="ISO codes (semicolon-separated)"
                          style="flex: 1; max-width: 300px;"/>
-                </div>
-
-                <div class="flex items-center gap-4">
-                  <label for="podium-xoffset" class="field-label-inline">X Offset:</label>
-                  <input id="podium-xoffset" [(ngModel)]='printService.xOffset'
-                         type="number"
-                         placeholder="0"
-                         style="max-width: 100px;"/>
-                  <span style="color: var(--text-muted); font-size: 12px;">Points (positive = right, negative = left)</span>
                 </div>
               </div>
 

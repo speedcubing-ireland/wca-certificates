@@ -33,7 +33,7 @@ describe('Navigation & Error States', () => {
 
     it('should navigate to Customize Podium tab', () => {
       cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-      cy.contains('Certificate Template').should('be.visible');
+      cy.contains('Certificate Layout').should('be.visible');
     });
 
     it('should allow navigating between all tabs', () => {
@@ -42,7 +42,7 @@ describe('Navigation & Error States', () => {
       cy.get('.events-table').should('be.visible');
 
       cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-      cy.contains('Certificate Template').should('be.visible');
+      cy.contains('Certificate Layout').should('be.visible');
 
       // Go back to first tab
       cy.contains('.mat-mdc-tab', 'Podium Certificates').click();

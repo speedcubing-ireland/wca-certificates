@@ -93,6 +93,18 @@ export interface WcaApiResult {
 }
 
 /**
+ * Visual element for the certificate editor
+ */
+export interface VisualElement {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  bold: boolean;
+}
+
+/**
  * PDFMake document definition (minimal typing for this project)
  */
 export interface PdfDocument {
@@ -114,10 +126,14 @@ export interface PdfContentItem {
   margin?: number[];
   pageBreak?: string;
   columns?: PdfContentItem[];
+  stack?: PdfContentItem[];
   width?: string | number;
   style?: string;
   table?: unknown;
   layout?: string;
+  absolutePosition?: { x: number; y: number };
+  fontSize?: number;
+  bold?: boolean;
 }
 
 /**

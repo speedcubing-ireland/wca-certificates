@@ -1,7 +1,7 @@
 import {TestBed} from '@angular/core/testing';
-import {PrintService} from './print';
+import {PrintService, isVisualFormat, convertLegacyTemplate, DEFAULT_VISUAL_ELEMENTS} from './print';
 import {Certificate} from './certificate';
-import {WCIF} from './types';
+import {WCIF, VisualElement} from './types';
 import {Person} from '@wca/helpers';
 import {Result} from '@wca/helpers/lib/models/result';
 
@@ -329,5 +329,173 @@ describe('PrintService', () => {
       expect(service.getEventName('pyram')).toBe('Pyraminx');
       expect(service.getEventName('clock')).toBe('Clock');
     });
+  });
+
+  describe('getOneCertificateContentFromVisualElements', () => {
+    function makeCertificate(): Certificate {
+      const cert = new Certificate();
+      cert.delegate = 'Jane Delegate';
+      cert.organizers = 'Org One and Org Two';
+      cert.competitionName = 'Irish Open 2024';
+      cert.name = 'Max Solver';
+      cert.place = 'first';
+      cert.event = '3x3x3';
+      cert.resultType = 'an average';
+      cert.result = '8.45';
+      cert.resultUnit = '';
+      cert.locationAndDate = 'Dublin, 2024';
+      return cert;
+    }
+
+    it('should generate content with absolutePosition matching element x and y', () => {
+      const elements: VisualElement[] = [
+        {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true},
+        {id: 'name', text: 'certificate.name', x: 300, y: 320, fontSize: 40, bold: true},
+      ];
+      service.podiumCertificateJson = JSON.stringify(elements);
+      service.pageOrientation = 'landscape';
+
+      const cert = makeCertificate();
+      const result = service.getOneCertificateContentFromVisualElements(cert);
+
+      expect(result.length).toBe(2);
+      expect(result[0].absolutePosition).toEqual({x: 421, y: 180});
+      expect(result[0].fontSize).toBe(40);
+      expect(result[0].bold).toBeTrue();
+      expect(result[1].absolutePosition).toEqual({x: 300, y: 320});
+    });
+
+    it('should replace certificate placeholders in element text', () => {
+      const elements: VisualElement[] = [
+        {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true},
+        {id: 'name', text: 'certificate.name', x: 421, y: 320, fontSize: 40, bold: true},
+      ];
+      service.podiumCertificateJson = JSON.stringify(elements);
+      service.pageOrientation = 'landscape';
+
+      const cert = makeCertificate();
+      const result = service.getOneCertificateContentFromVisualElements(cert);
+
+      expect(result[0].text).toBe('3x3x3');
+      expect(result[1].text).toBe('Max Solver');
+    });
+
+    it('should not set alignment or width', () => {
+      const elements: VisualElement[] = [
+        {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true},
+      ];
+      service.podiumCertificateJson = JSON.stringify(elements);
+      service.pageOrientation = 'landscape';
+
+      const cert = makeCertificate();
+      const result = service.getOneCertificateContentFromVisualElements(cert);
+
+      expect(result[0].alignment).toBeUndefined();
+      expect(result[0].width).toBeUndefined();
+    });
+  });
+
+  describe('resetPodiumCertificateJson', () => {
+    it('should reset to DEFAULT_VISUAL_ELEMENTS JSON', () => {
+      service.podiumCertificateJson = '[]';
+      service.resetPodiumCertificateJson();
+      const parsed = JSON.parse(service.podiumCertificateJson);
+      expect(parsed).toEqual(DEFAULT_VISUAL_ELEMENTS);
+    });
+  });
+});
+
+describe('isVisualFormat', () => {
+  it('should return true for new-format JSON (array of objects with x/y)', () => {
+    const json = JSON.stringify([
+      {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true}
+    ]);
+    expect(isVisualFormat(json)).toBeTrue();
+  });
+
+  it('should return false for old-format JSON (array with strings and text objects)', () => {
+    const json = JSON.stringify([
+      '\\n\\n\\n',
+      {text: 'certificate.event', fontSize: '40', bold: 'true'},
+      '\\n',
+      'some text'
+    ]);
+    expect(isVisualFormat(json)).toBeFalse();
+  });
+
+  it('should return false for invalid JSON', () => {
+    expect(isVisualFormat('not json')).toBeFalse();
+  });
+
+  it('should return false for empty array', () => {
+    expect(isVisualFormat('[]')).toBeFalse();
+  });
+
+  it('should return false for non-array JSON', () => {
+    expect(isVisualFormat('{"x": 1, "y": 2}')).toBeFalse();
+  });
+
+  it('should return false for array of strings', () => {
+    expect(isVisualFormat('["hello", "world"]')).toBeFalse();
+  });
+});
+
+describe('convertLegacyTemplate', () => {
+  it('should convert old-format JSON to VisualElement array', () => {
+    const json = JSON.stringify([
+      '\\n\\n\\n\\n\\n',
+      {text: 'certificate.event', fontSize: '40', bold: 'true'},
+      '\\n',
+      {text: 'certificate.name', fontSize: '32', bold: 'true'},
+    ]);
+    const result = convertLegacyTemplate(json, 0);
+    expect(result.length).toBe(2);
+    expect(result[0].text).toBe('certificate.event');
+    expect(result[0].fontSize).toBe(40);
+    expect(result[0].bold).toBeTrue();
+    expect(result[1].text).toBe('certificate.name');
+    expect(result[1].fontSize).toBe(32);
+  });
+
+  it('should apply xOffset to x positions', () => {
+    const json = JSON.stringify([
+      {text: 'certificate.event', fontSize: '40', bold: 'true'},
+    ]);
+    const result = convertLegacyTemplate(json, 25);
+    expect(result[0].x).toBe(421 + 25);
+  });
+
+  it('should return defaults for invalid JSON', () => {
+    const result = convertLegacyTemplate('not json', 0);
+    expect(result).toEqual(DEFAULT_VISUAL_ELEMENTS);
+  });
+
+  it('should return defaults for empty array', () => {
+    const result = convertLegacyTemplate('[]', 0);
+    // no elements parsed from empty array -> falls back to defaults
+    expect(result).toEqual(DEFAULT_VISUAL_ELEMENTS);
+  });
+
+  it('should return defaults for non-array JSON', () => {
+    const result = convertLegacyTemplate('{"foo": "bar"}', 0);
+    expect(result).toEqual(DEFAULT_VISUAL_ELEMENTS);
+  });
+
+  it('should handle string items with text content', () => {
+    const json = JSON.stringify([
+      'some visible text',
+    ]);
+    const result = convertLegacyTemplate(json, 0);
+    expect(result.length).toBe(1);
+    expect(result[0].text).toBe('some visible text');
+    expect(result[0].x).toBe(421);
+  });
+
+  it('should handle object items with boolean bold', () => {
+    const json = JSON.stringify([
+      {text: 'Bold text', fontSize: '28', bold: true},
+    ]);
+    const result = convertLegacyTemplate(json, 0);
+    expect(result[0].bold).toBeTrue();
   });
 });

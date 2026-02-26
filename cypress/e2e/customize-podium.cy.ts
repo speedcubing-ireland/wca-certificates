@@ -27,18 +27,46 @@ describe('Customize Podium Tab', () => {
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
   });
 
-  it('should have editable certificate template textarea', () => {
-    cy.get('textarea').first().should('be.visible');
-    cy.get('textarea').first().should('not.be.disabled');
+  it('should display the visual editor with a preview area', () => {
+    cy.get('[data-cy="preview-area"]').should('be.visible');
+  });
 
-    // Test editability
-    cy.get('textarea').first().clear().type('Test template content');
-    cy.get('textarea').first().should('have.value', 'Test template content');
+  it('should show default text elements with placeholder values', () => {
+    cy.get('[data-cy="visual-element"]').should('have.length', 4);
+    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3');
+  });
+
+  it('should select an element on click and show controls panel', () => {
+    cy.get('[data-cy="visual-element"]').first().click();
+    cy.get('[data-cy="controls-panel"]').should('be.visible');
+    cy.get('[data-cy="element-font-size"]').should('be.visible');
+    cy.get('[data-cy="element-bold"]').should('be.visible');
+  });
+
+  it('should update fontSize via controls', () => {
+    cy.get('[data-cy="visual-element"]').first().click();
+    cy.get('[data-cy="element-font-size"]').clear().type('50');
+    cy.get('[data-cy="element-font-size"]').should('have.value', '50');
+  });
+
+  it('should reset layout when Reset to Default Layout is clicked', () => {
+    // Change an element
+    cy.get('[data-cy="visual-element"]').first().click();
+    cy.get('[data-cy="element-font-size"]').clear().type('99');
+    cy.get('[data-cy="element-font-size"]').should('have.value', '99');
+
+    // Click elsewhere to deselect, then reset
+    cy.get('[data-cy="preview-area"]').click();
+    cy.get('[data-cy="reset-layout"]').click();
+
+    // Re-select first element and verify reset font size
+    cy.get('[data-cy="visual-element"]').first().click();
+    cy.get('[data-cy="element-font-size"]').should('have.value', '40');
   });
 
   it('should have editable style configuration textarea', () => {
-    cy.get('textarea').eq(1).should('be.visible');
-    cy.get('textarea').eq(1).should('not.be.disabled');
+    cy.get('textarea').first().should('be.visible');
+    cy.get('textarea').first().should('not.be.disabled');
   });
 
   it('should show preview-only checkbox and Clear button when background is uploaded', () => {
@@ -114,23 +142,6 @@ describe('Customize Podium Tab', () => {
     cy.get('input[placeholder*="ISO codes"]').should('be.visible');
     cy.get('input[placeholder*="ISO codes"]').type('IE;GB');
     cy.get('input[placeholder*="ISO codes"]').should('have.value', 'IE;GB');
-  });
-
-  it('should have X Offset input', () => {
-    cy.get('input[type="number"]').should('exist');
-    cy.get('input[type="number"]').first().clear().type('10');
-    cy.get('input[type="number"]').first().should('have.value', '10');
-  });
-
-  it('should reset certificate template to default after editing', () => {
-    cy.get('textarea#podium-template').invoke('val').then((defaultValue) => {
-      cy.get('textarea#podium-template').clear().type('edited template');
-      cy.get('textarea#podium-template').should('have.value', 'edited template');
-
-      // Click the Reset button below the template textarea
-      cy.contains('button', 'Reset to Default Template').click();
-      cy.get('textarea#podium-template').should('have.value', defaultValue);
-    });
   });
 
   it('should reset style configuration to default after editing', () => {

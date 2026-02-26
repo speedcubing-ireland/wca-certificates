@@ -160,12 +160,12 @@
       "id": "io.github.speedcubing_ireland.podiumTemplate",
       "specUrl": "https://github.com/speedcubing-ireland/wca-certificates",
       "data": {
-        "podiumCertificateJson": "[\"Saved Template Content\"]",
+        "podiumCertificateJson": "[{\"id\":\"event\",\"text\":\"certificate.event\",\"x\":421,\"y\":200,\"fontSize\":36,\"bold\":true},{\"id\":\"place\",\"text\":\"certificate.capitalisedPlace Place\",\"x\":421,\"y\":260,\"fontSize\":28,\"bold\":true},{\"id\":\"name\",\"text\":\"certificate.name\",\"x\":421,\"y\":340,\"fontSize\":36,\"bold\":true},{\"id\":\"result\",\"text\":\"with certificate.resultType of certificate.result certificate.resultUnit\",\"x\":421,\"y\":420,\"fontSize\":20,\"bold\":false}]",
         "podiumCertificateStyleJson": "{\"font\": \"mono\"}",
         "pageOrientation": "portrait",
         "backgroundForPreviewOnly": false,
         "countries": "IE",
-        "xOffset": 25
+        "xOffset": 0
       }
     }
   ]
