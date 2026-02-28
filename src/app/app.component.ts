@@ -1,4 +1,4 @@
-import {Component, ViewEncapsulation, inject} from '@angular/core';
+import {Component, ViewEncapsulation, inject, effect} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatTabsModule} from '@angular/material/tabs';
@@ -14,6 +14,25 @@ import { environment } from '../environments/environment';
 import { Competition, WCIF, WcaApiResult, VisualElement } from '../common/types';
 import { CertificateEditorComponent } from './certificate-editor/certificate-editor.component';
 import { DEFAULT_VISUAL_ELEMENTS, isVisualFormat, convertLegacyTemplate } from '../common/print';
+
+/** Parse competition and tab from URL search params */
+export function parseUrlParams(search: string): { competitionId: string | null; tab: string | null } {
+  const params = new URLSearchParams(search);
+  return {
+    competitionId: params.get('competition'),
+    tab: params.get('tab'),
+  };
+}
+
+/** Convert a tab name from URL to mat-tab index */
+export function tabNameToIndex(name: string | null): number {
+  return name === 'customize' ? 1 : 0;
+}
+
+/** Convert a mat-tab index to URL tab name (null means default/podium, omit from URL) */
+export function tabIndexToName(index: number): string | null {
+  return index === 1 ? 'customize' : null;
+}
 
 @Component({
     selector: 'app-root',
@@ -50,8 +69,21 @@ export class AppComponent {
   templateMessage: { text: string; type: 'success' | 'info' | 'error' } | null = null;
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  // URL bookmarking support
+  selectedTabIndex = 0;
+  pendingCompetitionId: string | null = null;
+  pendingTabIndex = 0;
+
   constructor() {
+      this.readUrlParams();
       this.handleGetCompetitions();
+
+      // Watch for login state changes to handle URL-based deep linking
+      effect(() => {
+        if (this.authService.isLoggedIn()) {
+          this.applyPendingNavigation();
+        }
+      });
   }
 
   handleGetCompetitions() {
@@ -94,8 +126,46 @@ export class AppComponent {
     this.pastCompetitions.sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime()); // Most recent first
   }
 
+  readUrlParams(search = window.location.search): void {
+    const parsed = parseUrlParams(search);
+    if (parsed.competitionId) {
+      this.pendingCompetitionId = parsed.competitionId;
+      this.pendingTabIndex = tabNameToIndex(parsed.tab);
+    }
+  }
+
+  applyPendingNavigation(): void {
+    if (this.pendingCompetitionId && !this.competitionId) {
+      this.selectedTabIndex = this.pendingTabIndex;
+      this.handleCompetitionSelected(this.pendingCompetitionId);
+      this.pendingCompetitionId = null;
+    }
+  }
+
+  onTabChange(index: number): void {
+    this.selectedTabIndex = index;
+    if (this.competitionId) {
+      this.updateUrl(this.competitionId, index);
+    }
+  }
+
+  updateUrl(competitionId: string, tabIndex = 0): void {
+    const params = new URLSearchParams();
+    params.set('competition', competitionId);
+    const tabName = tabIndexToName(tabIndex);
+    if (tabName) {
+      params.set('tab', tabName);
+    }
+    history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+  }
+
+  clearUrlParams(): void {
+    history.replaceState(null, '', window.location.pathname);
+  }
+
   handleCompetitionSelected(competitionId: string) {
     this.competitionId = competitionId;
+    this.updateUrl(competitionId, this.selectedTabIndex);
     this.loadWcif();
   }
 
@@ -374,6 +444,8 @@ export class AppComponent {
     this.events = [];
     this.error = '';
     this.loading = false;
+    this.selectedTabIndex = 0;
+    this.clearUrlParams();
   }
 
   private showTemplateMessage(text: string, type: 'success' | 'info' | 'error', ms = 3000): void {
