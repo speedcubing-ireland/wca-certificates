@@ -171,7 +171,7 @@
         </div>
 
         <!-- Tabs -->
-        <mat-tab-group>
+        <mat-tab-group [selectedIndex]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
 
           <!-- PODIUM CERTIFICATES TAB -->
           <mat-tab label="Podium Certificates">

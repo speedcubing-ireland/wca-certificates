@@ -29,7 +29,7 @@ Cypress.Commands.add('selectCompetition', (competitionId: string) => {
 });
 
 Cypress.Commands.add('navigateToTab', (tabLabel: string) => {
-  cy.contains('.mat-tab-label', tabLabel).click();
+  cy.contains('.mat-mdc-tab', tabLabel).click();
 });
 
 Cypress.Commands.add('waitForCompetitionLoad', () => {

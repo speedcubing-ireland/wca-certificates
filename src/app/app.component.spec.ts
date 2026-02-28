@@ -1,7 +1,8 @@
 import {TestBed} from '@angular/core/testing';
 import {provideHttpClient} from '@angular/common/http';
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
-import {AppComponent} from './app.component';
+import {of} from 'rxjs';
+import {AppComponent, parseUrlParams, tabNameToIndex, tabIndexToName} from './app.component';
 import {PrintService} from '../common/print';
 import {WCIF, WcaApiResult, Competition} from '../common/types';
 import {Result} from '@wca/helpers/lib/models/result';
@@ -724,5 +725,207 @@ describe('AppComponent', () => {
       expect(result).toContain('15');
       expect(result).toContain('17');
     });
+  });
+
+  describe('URL bookmarking', () => {
+    let replaceStateSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      replaceStateSpy = spyOn(history, 'replaceState');
+    });
+
+    describe('readUrlParams', () => {
+      it('should set pending competition from URL search params', () => {
+        component.readUrlParams('?competition=MyComp2024');
+        expect(component.pendingNavigation?.competitionId).toBe('MyComp2024');
+        expect(component.pendingNavigation?.tabIndex).toBe(0);
+      });
+
+      it('should set pending competition and tab from URL', () => {
+        component.readUrlParams('?competition=MyComp2024&tab=customize');
+        expect(component.pendingNavigation?.competitionId).toBe('MyComp2024');
+        expect(component.pendingNavigation?.tabIndex).toBe(1);
+      });
+
+      it('should not set pending when no competition param', () => {
+        component.readUrlParams('');
+        expect(component.pendingNavigation).toBeNull();
+      });
+
+      it('should default to podium tab for unknown tab value', () => {
+        component.readUrlParams('?competition=MyComp2024&tab=bogus');
+        expect(component.pendingNavigation?.tabIndex).toBe(0);
+      });
+    });
+
+    describe('applyPendingNavigation', () => {
+      it('should load competition from pending params', () => {
+        spyOn(component.apiService, 'getWcif').and.returnValue(of(makeWcif([makeEvent('333', [makeRound([])])], [makePerson('Alice', 1)])));
+        spyOn(component.apiService, 'getResults').and.returnValue(of([]));
+        component.pendingNavigation = { competitionId: 'PendingComp', tabIndex: 1 };
+
+        component.applyPendingNavigation();
+
+        expect(component.competitionId).toBe('PendingComp');
+        expect(component.selectedTabIndex).toBe(1);
+        expect(component.pendingNavigation).toBeNull();
+        expect(component.apiService.getWcif).toHaveBeenCalledWith('PendingComp');
+      });
+
+      it('should not navigate when no pending competition', () => {
+        component.pendingNavigation = null;
+        component.applyPendingNavigation();
+        expect(component.competitionId).toBeFalsy();
+      });
+
+      it('should not navigate when competition is already loaded', () => {
+        component.competitionId = 'AlreadyLoaded';
+        component.pendingNavigation = { competitionId: 'PendingComp', tabIndex: 0 };
+
+        component.applyPendingNavigation();
+
+        expect(component.competitionId).toBe('AlreadyLoaded');
+        expect(component.pendingNavigation).not.toBeNull();
+      });
+    });
+
+    describe('updateUrl', () => {
+      it('should set competition param in URL', () => {
+        component.updateUrl('MyComp2024');
+        expect(replaceStateSpy).toHaveBeenCalledWith(
+          null, '',
+          jasmine.stringContaining('competition=MyComp2024')
+        );
+      });
+
+      it('should include tab param when tab is customize', () => {
+        component.updateUrl('MyComp2024', 1);
+        const url = replaceStateSpy.calls.mostRecent().args[2] as string;
+        expect(url).toContain('competition=MyComp2024');
+        expect(url).toContain('tab=customize');
+      });
+
+      it('should omit tab param for default podium tab', () => {
+        component.updateUrl('MyComp2024', 0);
+        const url = replaceStateSpy.calls.mostRecent().args[2] as string;
+        expect(url).toContain('competition=MyComp2024');
+        expect(url).not.toContain('tab=');
+      });
+    });
+
+    describe('onTabChange', () => {
+      it('should update selectedTabIndex and URL when competition is loaded', () => {
+        component.competitionId = 'TestComp';
+        component.onTabChange(1);
+        expect(component.selectedTabIndex).toBe(1);
+        expect(replaceStateSpy).toHaveBeenCalledWith(
+          null, '',
+          jasmine.stringContaining('tab=customize')
+        );
+      });
+
+      it('should not update URL when no competition is loaded', () => {
+        component.competitionId = '';
+        component.onTabChange(1);
+        expect(component.selectedTabIndex).toBe(1);
+        expect(replaceStateSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('handleCompetitionSelected', () => {
+      beforeEach(() => {
+        spyOn(component.apiService, 'getWcif').and.returnValue(of(makeWcif()));
+        spyOn(component.apiService, 'getResults').and.returnValue(of([]));
+      });
+
+      it('should update URL when competition is selected', () => {
+        component.handleCompetitionSelected('TestComp');
+        expect(replaceStateSpy).toHaveBeenCalledWith(
+          null, '',
+          jasmine.stringContaining('competition=TestComp')
+        );
+      });
+
+      it('should include current tab in URL', () => {
+        component.selectedTabIndex = 1;
+        component.handleCompetitionSelected('TestComp');
+        const url = replaceStateSpy.calls.mostRecent().args[2] as string;
+        expect(url).toContain('tab=customize');
+      });
+    });
+
+    describe('clearUrlParams on logout', () => {
+      it('should clear URL params and reset tab on logout', () => {
+        spyOn(window, 'confirm').and.returnValue(true);
+        component.competitionId = 'TestComp';
+        component.selectedTabIndex = 1;
+
+        component.logout();
+
+        expect(component.selectedTabIndex).toBe(0);
+        expect(replaceStateSpy).toHaveBeenCalled();
+        const url = replaceStateSpy.calls.mostRecent().args[2] as string;
+        expect(url).not.toContain('competition');
+        expect(url).not.toContain('tab');
+      });
+    });
+  });
+});
+
+describe('parseUrlParams', () => {
+  it('should extract competition from URL search string', () => {
+    const result = parseUrlParams('?competition=TestComp2024');
+    expect(result.competitionId).toBe('TestComp2024');
+    expect(result.tab).toBeNull();
+  });
+
+  it('should extract competition and tab', () => {
+    const result = parseUrlParams('?competition=TestComp2024&tab=customize');
+    expect(result.competitionId).toBe('TestComp2024');
+    expect(result.tab).toBe('customize');
+  });
+
+  it('should return nulls when no params present', () => {
+    const result = parseUrlParams('');
+    expect(result.competitionId).toBeNull();
+    expect(result.tab).toBeNull();
+  });
+
+  it('should return nulls for unrelated params', () => {
+    const result = parseUrlParams('?foo=bar');
+    expect(result.competitionId).toBeNull();
+    expect(result.tab).toBeNull();
+  });
+});
+
+describe('tabNameToIndex', () => {
+  it('should return 0 for null', () => {
+    expect(tabNameToIndex(null)).toBe(0);
+  });
+
+  it('should return 0 for "podium"', () => {
+    expect(tabNameToIndex('podium')).toBe(0);
+  });
+
+  it('should return 1 for "customize"', () => {
+    expect(tabNameToIndex('customize')).toBe(1);
+  });
+
+  it('should return 0 for unknown value', () => {
+    expect(tabNameToIndex('unknown')).toBe(0);
+  });
+});
+
+describe('tabIndexToName', () => {
+  it('should return null for index 0 (podium is default, omit from URL)', () => {
+    expect(tabIndexToName(0)).toBeNull();
+  });
+
+  it('should return "customize" for index 1', () => {
+    expect(tabIndexToName(1)).toBe('customize');
+  });
+
+  it('should return null for out-of-range index', () => {
+    expect(tabIndexToName(99)).toBeNull();
   });
 });
