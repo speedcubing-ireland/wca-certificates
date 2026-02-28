@@ -737,24 +737,24 @@ describe('AppComponent', () => {
     describe('readUrlParams', () => {
       it('should set pending competition from URL search params', () => {
         component.readUrlParams('?competition=MyComp2024');
-        expect(component.pendingCompetitionId).toBe('MyComp2024');
-        expect(component.pendingTabIndex).toBe(0);
+        expect(component.pendingNavigation?.competitionId).toBe('MyComp2024');
+        expect(component.pendingNavigation?.tabIndex).toBe(0);
       });
 
       it('should set pending competition and tab from URL', () => {
         component.readUrlParams('?competition=MyComp2024&tab=customize');
-        expect(component.pendingCompetitionId).toBe('MyComp2024');
-        expect(component.pendingTabIndex).toBe(1);
+        expect(component.pendingNavigation?.competitionId).toBe('MyComp2024');
+        expect(component.pendingNavigation?.tabIndex).toBe(1);
       });
 
       it('should not set pending when no competition param', () => {
         component.readUrlParams('');
-        expect(component.pendingCompetitionId).toBeNull();
+        expect(component.pendingNavigation).toBeNull();
       });
 
       it('should default to podium tab for unknown tab value', () => {
         component.readUrlParams('?competition=MyComp2024&tab=bogus');
-        expect(component.pendingTabIndex).toBe(0);
+        expect(component.pendingNavigation?.tabIndex).toBe(0);
       });
     });
 
@@ -762,31 +762,30 @@ describe('AppComponent', () => {
       it('should load competition from pending params', () => {
         spyOn(component.apiService, 'getWcif').and.returnValue(of(makeWcif([makeEvent('333', [makeRound([])])], [makePerson('Alice', 1)])));
         spyOn(component.apiService, 'getResults').and.returnValue(of([]));
-        component.pendingCompetitionId = 'PendingComp';
-        component.pendingTabIndex = 1;
+        component.pendingNavigation = { competitionId: 'PendingComp', tabIndex: 1 };
 
         component.applyPendingNavigation();
 
         expect(component.competitionId).toBe('PendingComp');
         expect(component.selectedTabIndex).toBe(1);
-        expect(component.pendingCompetitionId).toBeNull();
+        expect(component.pendingNavigation).toBeNull();
         expect(component.apiService.getWcif).toHaveBeenCalledWith('PendingComp');
       });
 
       it('should not navigate when no pending competition', () => {
-        component.pendingCompetitionId = null;
+        component.pendingNavigation = null;
         component.applyPendingNavigation();
         expect(component.competitionId).toBeFalsy();
       });
 
       it('should not navigate when competition is already loaded', () => {
         component.competitionId = 'AlreadyLoaded';
-        component.pendingCompetitionId = 'PendingComp';
+        component.pendingNavigation = { competitionId: 'PendingComp', tabIndex: 0 };
 
         component.applyPendingNavigation();
 
         expect(component.competitionId).toBe('AlreadyLoaded');
-        expect(component.pendingCompetitionId).toBe('PendingComp');
+        expect(component.pendingNavigation).not.toBeNull();
       });
     });
 

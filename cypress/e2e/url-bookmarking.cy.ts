@@ -1,5 +1,15 @@
 /// <reference types="cypress" />
 
+function simulateLogin() {
+  cy.window().then(win => {
+    win.localStorage.setItem('wca_access_token', 'fake-token');
+    win.dispatchEvent(new StorageEvent('storage', {
+      key: 'wca_access_token',
+      newValue: 'fake-token'
+    }));
+  });
+}
+
 describe('URL Bookmarking', () => {
   beforeEach(() => {
     cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/IE.json', {
@@ -19,28 +29,28 @@ describe('URL Bookmarking', () => {
     it('should navigate directly to competition from URL', () => {
       cy.visit('/?competition=TestCompetition2024');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
       cy.get('.comp-title').should('contain', 'TestCompetition2024');
     });
 
     it('should default to Podium Certificates tab when no tab param', () => {
       cy.visit('/?competition=TestCompetition2024');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
       cy.get('.events-table').should('be.visible');
     });
 
     it('should navigate to Customize Podium tab from URL', () => {
       cy.visit('/?competition=TestCompetition2024&tab=customize');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
       cy.contains('Certificate Layout').should('be.visible');
     });
 
     it('should default to podium tab for unknown tab value', () => {
       cy.visit('/?competition=TestCompetition2024&tab=bogus');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
       cy.get('.events-table').should('be.visible');
     });
   });
@@ -52,7 +62,7 @@ describe('URL Bookmarking', () => {
 
       cy.get('.competition').first().click();
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
 
       cy.location('search').should('contain', 'competition=');
     });
@@ -71,18 +81,18 @@ describe('URL Bookmarking', () => {
     it('should update URL with tab param when switching to Customize Podium', () => {
       cy.visit('/?competition=TestCompetition2024');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
 
-      cy.contains('.mat-mdc-tab', 'Customize Podium').click();
+      cy.navigateToTab('Customize Podium');
       cy.location('search').should('contain', 'tab=customize');
     });
 
     it('should remove tab param from URL when switching back to Podium Certificates', () => {
       cy.visit('/?competition=TestCompetition2024&tab=customize');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
 
-      cy.contains('.mat-mdc-tab', 'Podium Certificates').click();
+      cy.navigateToTab('Podium Certificates');
       cy.location('search').should('contain', 'competition=TestCompetition2024');
       cy.location('search').should('not.contain', 'tab=');
     });
@@ -90,7 +100,7 @@ describe('URL Bookmarking', () => {
     it('should clear URL params on logout', () => {
       cy.visit('/?competition=TestCompetition2024');
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
 
       cy.on('window:confirm', () => true);
       cy.contains('button', 'Log Out').click();
@@ -118,17 +128,10 @@ describe('URL Bookmarking', () => {
 
       cy.contains('Please log in with your WCA account').should('be.visible');
 
-      // Simulate login by setting token and dispatching storage event
-      cy.window().then(win => {
-        win.localStorage.setItem('wca_access_token', 'fake-token');
-        win.dispatchEvent(new StorageEvent('storage', {
-          key: 'wca_access_token',
-          newValue: 'fake-token'
-        }));
-      });
+      simulateLogin();
 
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
       cy.get('.comp-title').should('contain', 'TestCompetition2024');
     });
 
@@ -139,17 +142,10 @@ describe('URL Bookmarking', () => {
 
       cy.contains('Please log in with your WCA account').should('be.visible');
 
-      // Simulate login
-      cy.window().then(win => {
-        win.localStorage.setItem('wca_access_token', 'fake-token');
-        win.dispatchEvent(new StorageEvent('storage', {
-          key: 'wca_access_token',
-          newValue: 'fake-token'
-        }));
-      });
+      simulateLogin();
 
       cy.wait('@getWcif');
-      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+      cy.waitForCompetitionLoad();
       cy.contains('Certificate Layout').should('be.visible');
     });
   });

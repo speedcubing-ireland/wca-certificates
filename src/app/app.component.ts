@@ -1,4 +1,4 @@
-import {Component, ViewEncapsulation, inject, effect} from '@angular/core';
+import {Component, ViewEncapsulation, inject, effect, EffectRef} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatTabsModule} from '@angular/material/tabs';
@@ -71,19 +71,21 @@ export class AppComponent {
 
   // URL bookmarking support
   selectedTabIndex = 0;
-  pendingCompetitionId: string | null = null;
-  pendingTabIndex = 0;
+  pendingNavigation: { competitionId: string; tabIndex: number } | null = null;
 
   constructor() {
       this.readUrlParams();
       this.handleGetCompetitions();
 
       // Watch for login state changes to handle URL-based deep linking
-      effect(() => {
-        if (this.authService.isLoggedIn()) {
-          this.applyPendingNavigation();
-        }
-      });
+      if (this.pendingNavigation) {
+        const ref: EffectRef = effect(() => {
+          if (this.authService.isLoggedIn()) {
+            this.applyPendingNavigation();
+            ref.destroy();
+          }
+        });
+      }
   }
 
   handleGetCompetitions() {
@@ -129,16 +131,18 @@ export class AppComponent {
   readUrlParams(search = window.location.search): void {
     const parsed = parseUrlParams(search);
     if (parsed.competitionId) {
-      this.pendingCompetitionId = parsed.competitionId;
-      this.pendingTabIndex = tabNameToIndex(parsed.tab);
+      this.pendingNavigation = {
+        competitionId: parsed.competitionId,
+        tabIndex: tabNameToIndex(parsed.tab),
+      };
     }
   }
 
   applyPendingNavigation(): void {
-    if (this.pendingCompetitionId && !this.competitionId) {
-      this.selectedTabIndex = this.pendingTabIndex;
-      this.handleCompetitionSelected(this.pendingCompetitionId);
-      this.pendingCompetitionId = null;
+    if (this.pendingNavigation && !this.competitionId) {
+      this.selectedTabIndex = this.pendingNavigation.tabIndex;
+      this.handleCompetitionSelected(this.pendingNavigation.competitionId);
+      this.pendingNavigation = null;
     }
   }
 
