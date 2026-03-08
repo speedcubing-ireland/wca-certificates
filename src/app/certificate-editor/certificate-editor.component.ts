@@ -35,7 +35,7 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
   @ViewChild('previewCanvas') canvasRef: ElementRef<HTMLCanvasElement>;
 
   /** Whether the PDF is currently being regenerated */
-  loading = false;
+  loading = true;
   /** Whether we have rendered at least once */
   hasRendered = false;
 
