@@ -31,11 +31,8 @@ describe('Customize Podium Tab', () => {
     cy.get('[data-cy="preview-area"]').should('be.visible');
   });
 
-  it('should show a text block with placeholder values', () => {
-    cy.get('[data-cy="text-block"]').should('be.visible');
-    cy.get('[data-cy="text-block"]').should('contain.text', '3x3x3');
-    cy.get('[data-cy="text-block"]').should('contain.text', 'First Place');
-    cy.get('[data-cy="text-block"]').should('contain.text', 'Patrick Roger Smith');
+  it('should render preview canvas layer', () => {
+    cy.get('[data-cy="preview-canvas"]').should('be.visible');
   });
 
   it('should display x and y offset sliders', () => {
@@ -55,9 +52,12 @@ describe('Customize Podium Tab', () => {
     cy.get('[data-cy="y-offset-value"]').should('contain.text', '-30pt');
   });
 
-  it('should reset template when Reset to Default Template is clicked', () => {
-    cy.get('[data-cy="reset-layout"]').click();
-    cy.get('[data-cy="text-block"]').should('contain.text', '3x3x3');
+  it('should reset style when Reset to Default Style is clicked', () => {
+    cy.get('textarea#podium-style').should('be.visible');
+    cy.get('textarea#podium-style').clear().type('{"font":"mono"}');
+    cy.get('textarea#podium-style').should('have.value', '{"font":"mono"}');
+    cy.contains('button', 'Reset to Default Style').click();
+    cy.get('textarea#podium-style').should('not.have.value', '{"font":"mono"}');
   });
 
   it('should have editable style configuration textarea', () => {

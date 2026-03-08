@@ -25,11 +25,7 @@ describe('Template Extension - Auto-load', () => {
     // Template should be auto-loaded with distinct message
     cy.get('[data-cy="template-message"]').should('contain', 'Saved template applied.');
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-    // Visual editor should show elements from saved template
-    cy.get('[data-cy="visual-element"]').should('have.length', 4);
-    // Check that saved template values are applied (fontSize 36 from fixture)
-    cy.get('[data-cy="visual-element"]').first().click();
-    cy.get('[data-cy="element-font-size"]').should('have.value', '36');
+    cy.get('[data-cy="preview-canvas"]').should('be.visible');
     cy.get('textarea#podium-style').should('have.value', '{"font": "mono"}');
     cy.get('#podium-orientation').should('have.value', 'portrait');
     cy.get('input#podium-countries').should('have.value', 'IE');
@@ -48,11 +44,44 @@ describe('Template Extension - Auto-load', () => {
 
     // No auto-load message should appear
     cy.get('[data-cy="template-message"]').should('not.exist');
-    // Default visual elements should be present with placeholder text
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-    cy.get('[data-cy="visual-element"]').should('have.length', 4);
-    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3');
+    cy.get('[data-cy="preview-canvas"]').should('be.visible');
+    cy.get('textarea#podium-style').should('contain.value', 'Roboto');
     cy.get('#podium-orientation').should('have.value', 'landscape');
+  });
+});
+
+describe('Template Extension - Migration for old templates', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/IE.json', {
+      fixture: 'competitions.json'
+    }).as('getIrishCompetitions');
+
+    cy.intercept('GET', '**/speedcubing-ireland/wca-analysis/api/competitions/GB.json', {
+      fixture: 'competitions-gb.json'
+    }).as('getUKCompetitions');
+  });
+
+  it('should migrate old saved template and show migration message', () => {
+    cy.fixture('wcif-with-template.json').then((wcif) => {
+      const oldWcif = JSON.parse(JSON.stringify(wcif));
+      // Simulate old template: missing templateVersion and old template JSON
+      delete oldWcif.extensions[0].data.templateVersion;
+      oldWcif.extensions[0].data.podiumCertificateJson = '["old format"]';
+
+      cy.intercept('GET', '**/api/v0/competitions/*/wcif/', oldWcif).as('getWcif');
+
+      cy.visit('/');
+      cy.wait(['@getIrishCompetitions', '@getUKCompetitions']);
+      cy.get('.competition').first().click();
+      cy.wait('@getWcif');
+      cy.get('.comp-interface', { timeout: 10000 }).should('be.visible');
+
+      cy.get('[data-cy="template-message"]').should('contain', 'older version');
+      cy.contains('.mat-mdc-tab', 'Customize Podium').click();
+      cy.get('[data-cy="preview-canvas"]').should('be.visible');
+      cy.get('textarea#podium-style').should('have.value', '{"font": "mono"}');
+    });
   });
 });
 
@@ -105,10 +134,10 @@ describe('Template Extension - Load from Server', () => {
 
     cy.get('[data-cy="template-message"]').should('be.visible');
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
-    // Visual editor should show elements from the loaded template
-    cy.get('[data-cy="visual-element"]').should('have.length', 4);
-    cy.get('[data-cy="visual-element"]').first().click();
-    cy.get('[data-cy="element-font-size"]').should('have.value', '36');
+    cy.get('[data-cy="preview-canvas"]').should('be.visible');
+    cy.get('textarea#podium-style').should('have.value', '{"font": "mono"}');
+    cy.get('#podium-orientation').should('have.value', 'portrait');
+    cy.get('input#podium-countries').should('have.value', 'IE');
   });
 });
 
