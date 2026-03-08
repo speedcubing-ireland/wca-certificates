@@ -54,7 +54,7 @@ describe('Customize Podium Tab', () => {
 
   it('should reset style when Reset to Default Style is clicked', () => {
     cy.get('textarea#podium-style').should('be.visible');
-    cy.get('textarea#podium-style').clear().type('{"font":"mono"}');
+    cy.get('textarea#podium-style').clear().type('{"font":"mono"}', { parseSpecialCharSequences: false });
     cy.get('textarea#podium-style').should('have.value', '{"font":"mono"}');
     cy.contains('button', 'Reset to Default Style').click();
     cy.get('textarea#podium-style').should('not.have.value', '{"font":"mono"}');
