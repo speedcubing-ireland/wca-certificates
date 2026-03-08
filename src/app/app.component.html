@@ -240,10 +240,14 @@
                 <app-certificate-editor
                   [orientation]="printService.pageOrientation"
                   [backgroundImage]="printService.background"
-                  [elements]="visualElements"
-                  (elementsChange)="onVisualElementsChange($event)">
+                  [templateJson]="printService.podiumCertificateJson"
+                  [styleJson]="printService.podiumCertificateStyleJson"
+                  [xOffset]="printService.xOffset"
+                  [yOffset]="printService.yOffset"
+                  (xOffsetChange)="printService.xOffset = $event"
+                  (yOffsetChange)="printService.yOffset = $event">
                 </app-certificate-editor>
-                <button class="btn-secondary" style="margin-top: 8px;" (click)="resetVisualElements()" data-cy="reset-layout">Reset to Default Layout</button>
+                <button class="btn-secondary" style="margin-top: 8px;" (click)="printService.resetPodiumCertificateJson()" data-cy="reset-layout">Reset to Default Template</button>
               </div>
 
               <div class="mb-4">

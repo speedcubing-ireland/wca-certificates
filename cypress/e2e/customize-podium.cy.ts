@@ -27,41 +27,37 @@ describe('Customize Podium Tab', () => {
     cy.contains('.mat-mdc-tab', 'Customize Podium').click();
   });
 
-  it('should display the visual editor with a preview area', () => {
+  it('should display the certificate editor with a preview area', () => {
     cy.get('[data-cy="preview-area"]').should('be.visible');
   });
 
-  it('should show default text elements with placeholder values', () => {
-    cy.get('[data-cy="visual-element"]').should('have.length', 4);
-    cy.get('[data-cy="visual-element"]').first().should('contain.text', '3x3x3');
+  it('should show a text block with placeholder values', () => {
+    cy.get('[data-cy="text-block"]').should('be.visible');
+    cy.get('[data-cy="text-block"]').should('contain.text', '3x3x3');
+    cy.get('[data-cy="text-block"]').should('contain.text', 'First Place');
+    cy.get('[data-cy="text-block"]').should('contain.text', 'Patrick Roger Smith');
   });
 
-  it('should select an element on click and show controls panel', () => {
-    cy.get('[data-cy="visual-element"]').first().click();
-    cy.get('[data-cy="controls-panel"]').should('be.visible');
-    cy.get('[data-cy="element-font-size"]').should('be.visible');
-    cy.get('[data-cy="element-bold"]').should('be.visible');
+  it('should display x and y offset sliders', () => {
+    cy.get('[data-cy="x-offset-slider"]').should('be.visible');
+    cy.get('[data-cy="y-offset-slider"]').should('be.visible');
+    cy.get('[data-cy="x-offset-value"]').should('contain.text', '0pt');
+    cy.get('[data-cy="y-offset-value"]').should('contain.text', '0pt');
   });
 
-  it('should update fontSize via controls', () => {
-    cy.get('[data-cy="visual-element"]').first().click();
-    cy.get('[data-cy="element-font-size"]').clear().type('50');
-    cy.get('[data-cy="element-font-size"]').should('have.value', '50');
+  it('should update x offset value when slider changes', () => {
+    cy.get('[data-cy="x-offset-slider"]').invoke('val', 50).trigger('input');
+    cy.get('[data-cy="x-offset-value"]').should('contain.text', '50pt');
   });
 
-  it('should reset layout when Reset to Default Layout is clicked', () => {
-    // Change an element
-    cy.get('[data-cy="visual-element"]').first().click();
-    cy.get('[data-cy="element-font-size"]').clear().type('99');
-    cy.get('[data-cy="element-font-size"]').should('have.value', '99');
+  it('should update y offset value when slider changes', () => {
+    cy.get('[data-cy="y-offset-slider"]').invoke('val', -30).trigger('input');
+    cy.get('[data-cy="y-offset-value"]').should('contain.text', '-30pt');
+  });
 
-    // Click elsewhere to deselect, then reset
-    cy.get('[data-cy="preview-area"]').click();
+  it('should reset template when Reset to Default Template is clicked', () => {
     cy.get('[data-cy="reset-layout"]').click();
-
-    // Re-select first element and verify reset font size
-    cy.get('[data-cy="visual-element"]').first().click();
-    cy.get('[data-cy="element-font-size"]').should('have.value', '40');
+    cy.get('[data-cy="text-block"]').should('contain.text', '3x3x3');
   });
 
   it('should have editable style configuration textarea', () => {

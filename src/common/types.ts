@@ -12,13 +12,17 @@ export interface WcifExtension {
 /**
  * Podium template extension data
  */
+export const CURRENT_TEMPLATE_VERSION = 2;
+
 export interface PodiumTemplateExtensionData {
+  templateVersion?: number;
   podiumCertificateJson: string;
   podiumCertificateStyleJson: string;
   pageOrientation: 'landscape' | 'portrait';
   backgroundForPreviewOnly: boolean;
   countries: string;
   xOffset: number;
+  yOffset: number;
 }
 
 /**
@@ -93,18 +97,6 @@ export interface WcaApiResult {
 }
 
 /**
- * Visual element for the certificate editor
- */
-export interface VisualElement {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-  fontSize: number;
-  bold: boolean;
-}
-
-/**
  * PDFMake document definition (minimal typing for this project)
  */
 export interface PdfDocument {
@@ -145,5 +137,29 @@ export interface PdfMakeStatic {
     download(filename: string): void;
     open(): void;
     getBlob(callback: (blob: Blob) => void): void;
+    getDataUrl(callback: (dataUrl: string) => void): void;
+    getBuffer(callback: (buffer: ArrayBuffer) => void): void;
   };
+}
+
+/**
+ * PDF.js library interface (minimal typing for rendering PDF pages to canvas)
+ */
+export interface PdfjsLib {
+  getDocument(data: { data: ArrayBuffer }): { promise: Promise<PdfjsDocument> };
+  GlobalWorkerOptions: { workerSrc: string };
+}
+
+export interface PdfjsDocument {
+  getPage(pageNumber: number): Promise<PdfjsPage>;
+}
+
+export interface PdfjsPage {
+  getViewport(params: { scale: number }): PdfjsViewport;
+  render(params: { canvasContext: CanvasRenderingContext2D; viewport: PdfjsViewport; background?: string }): { promise: Promise<void> };
+}
+
+export interface PdfjsViewport {
+  width: number;
+  height: number;
 }

@@ -4,7 +4,7 @@ import {provideHttpClient} from '@angular/common/http';
 import {TemplateExtensionService} from './template-extension';
 import {AuthService} from './auth';
 import {PrintService} from './print';
-import {WCIF, WcifExtension, PodiumTemplateExtensionData} from './types';
+import {WCIF, WcifExtension, PodiumTemplateExtensionData, CURRENT_TEMPLATE_VERSION} from './types';
 import {environment} from '../environments/environment';
 
 const EXTENSION_ID = 'io.github.speedcubing_ireland.podiumTemplate';
@@ -48,6 +48,7 @@ function makeTemplateData(overrides: Partial<PodiumTemplateExtensionData> = {}):
     backgroundForPreviewOnly: false,
     countries: 'IE',
     xOffset: 15,
+    yOffset: 0,
     ...overrides
   };
 }
@@ -72,11 +73,13 @@ describe('TemplateExtensionService', () => {
     // Create a mock PrintService that doesn't depend on pdfMake
     mockPrintService = {
       podiumCertificateJson: CERTIFICATE_JSON,
+      defaultPodiumCertificateJson: CERTIFICATE_JSON,
       podiumCertificateStyleJson: STYLE_JSON,
       pageOrientation: 'landscape' as const,
       backgroundForPreviewOnly: true,
       countries: '',
       xOffset: 0,
+      yOffset: 0,
     };
 
     mockAuthService = {
@@ -172,23 +175,26 @@ describe('TemplateExtensionService', () => {
       mockPrintService.backgroundForPreviewOnly = false;
       mockPrintService.countries = 'IE;GB';
       mockPrintService.xOffset = 42;
+      mockPrintService.yOffset = -10;
 
       const ext = service.buildExtension();
 
       expect(ext.id).toBe(EXTENSION_ID);
       expect(ext.specUrl).toBe('https://github.com/speedcubing-ireland/wca-certificates');
       const data = ext.data as unknown as PodiumTemplateExtensionData;
+      expect(data.templateVersion).toBe(CURRENT_TEMPLATE_VERSION);
       expect(data.podiumCertificateJson).toBe(customJson);
       expect(data.podiumCertificateStyleJson).toBe(customStyleJson);
       expect(data.pageOrientation).toBe('portrait');
       expect(data.backgroundForPreviewOnly).toBeFalse();
       expect(data.countries).toBe('IE;GB');
       expect(data.xOffset).toBe(42);
+      expect(data.yOffset).toBe(-10);
     });
   });
 
   describe('applyTemplate', () => {
-    it('should set all PrintService properties from template data', () => {
+    it('should set all PrintService properties and not migrate when version is current', () => {
       // A simplified template with fewer newlines and a different font
       const appliedJson = `[
 "\\n\\n",
@@ -203,42 +209,95 @@ describe('TemplateExtensionService', () => {
 ]`;
       const appliedStyleJson = JSON.stringify({font: 'barriecito', otherFonts: ['mono']}, null, 2);
       const data = makeTemplateData({
+        templateVersion: CURRENT_TEMPLATE_VERSION,
         podiumCertificateJson: appliedJson,
         podiumCertificateStyleJson: appliedStyleJson,
         pageOrientation: 'portrait',
         backgroundForPreviewOnly: false,
         countries: 'GB',
-        xOffset: -10
+        xOffset: -10,
+        yOffset: 20
       });
 
-      service.applyTemplate(data);
+      const migrated = service.applyTemplate(data);
 
+      expect(migrated).toBeFalse();
       expect(mockPrintService.podiumCertificateJson).toBe(appliedJson);
       expect(mockPrintService.podiumCertificateStyleJson).toBe(appliedStyleJson);
       expect(mockPrintService.pageOrientation).toBe('portrait');
       expect(mockPrintService.backgroundForPreviewOnly).toBeFalse();
       expect(mockPrintService.countries).toBe('GB');
       expect(mockPrintService.xOffset).toBe(-10);
+      expect(mockPrintService.yOffset).toBe(20);
+    });
+
+    it('should migrate old template (no version) by resetting JSON to default', () => {
+      const oldJson = '["old visual elements format"]';
+      const data = makeTemplateData({
+        podiumCertificateJson: oldJson,
+        countries: 'IE'
+      });
+      
+      const migrated = service.applyTemplate(data);
+      expect(migrated).toBeTrue();
+      expect(mockPrintService.podiumCertificateJson).toBe(mockPrintService.defaultPodiumCertificateJson);
+      expect(mockPrintService.countries).toBe('IE');
+    });
+
+    it('should migrate template with old version number', () => {
+      const data = makeTemplateData({
+        templateVersion: 1,
+        podiumCertificateJson: '["version 1 format"]',
+        xOffset: 42
+      });
+
+      const migrated = service.applyTemplate(data);
+
+      expect(migrated).toBeTrue();
+      expect(mockPrintService.podiumCertificateJson).toBe(mockPrintService.defaultPodiumCertificateJson);
+      expect(mockPrintService.xOffset).toBe(42);
     });
   });
 
   describe('loadTemplate', () => {
-    it('should apply template and return true when extension exists', () => {
-      const templateData = makeTemplateData({countries: 'IE'});
+    it('should apply template and return "loaded" when current-version extension exists', () => {
+      const templateData = makeTemplateData({templateVersion: CURRENT_TEMPLATE_VERSION, countries: 'IE'});
       const wcif = makeWcif([makeExtension(templateData)]);
 
       const result = service.loadTemplate(wcif);
 
-      expect(result).toBeTrue();
+      expect(result).toBe('loaded');
       expect(mockPrintService.countries).toBe('IE');
     });
 
-    it('should return false when no extension exists', () => {
+    it('should return "migrated" when template has no version (old format)', () => {
+      const oldData = makeTemplateData({countries: 'IE'});
+      // No templateVersion
+      const wcif = makeWcif([makeExtension(oldData)]);
+
+      const result = service.loadTemplate(wcif);
+
+      expect(result).toBe('migrated');
+      expect(mockPrintService.podiumCertificateJson).toBe(mockPrintService.defaultPodiumCertificateJson);
+      expect(mockPrintService.countries).toBe('IE');
+    });
+
+    it('should return "migrated" when template has old version', () => {
+      const oldData = makeTemplateData({templateVersion: 1, countries: 'GB'});
+      const wcif = makeWcif([makeExtension(oldData)]);
+
+      const result = service.loadTemplate(wcif);
+
+      expect(result).toBe('migrated');
+      expect(mockPrintService.countries).toBe('GB');
+    });
+
+    it('should return null when no extension exists', () => {
       const wcif = makeWcif([]);
 
       const result = service.loadTemplate(wcif);
 
-      expect(result).toBeFalse();
+      expect(result).toBeNull();
     });
 
     it('should not modify PrintService when no extension exists', () => {
@@ -323,47 +382,33 @@ describe('TemplateExtensionService', () => {
     });
   });
 
-  describe('visual-format templates', () => {
-    const VISUAL_JSON = JSON.stringify([
-      {id: 'event', text: 'certificate.event', x: 421, y: 200, fontSize: 36, bold: true},
-      {id: 'name', text: 'certificate.name', x: 421, y: 340, fontSize: 36, bold: true},
-    ]);
-
-    it('should correctly save and load new visual-format templates', () => {
-      mockPrintService.podiumCertificateJson = VISUAL_JSON;
-      mockPrintService.xOffset = 0;
-
-      const ext = service.buildExtension();
-      const data = ext.data as unknown as PodiumTemplateExtensionData;
-      expect(data.podiumCertificateJson).toBe(VISUAL_JSON);
-      expect(data.xOffset).toBe(0);
-
-      // Simulate loading back
-      mockPrintService.podiumCertificateJson = '';
-      service.applyTemplate(data);
-      expect(mockPrintService.podiumCertificateJson).toBe(VISUAL_JSON);
-    });
-
-    it('should handle loading an old-format template (backward compat)', () => {
+  describe('backward compatibility', () => {
+    it('should handle loading a template without yOffset (old format)', () => {
       const oldFormatData = makeTemplateData({
+        templateVersion: CURRENT_TEMPLATE_VERSION,
         podiumCertificateJson: CERTIFICATE_JSON,
         xOffset: 15
       });
+      // Simulate old data that doesn't have yOffset
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (oldFormatData as any).yOffset;
 
-      service.applyTemplate(oldFormatData);
+      const migrated = service.applyTemplate(oldFormatData);
 
-      // applyTemplate just sets the values — the caller (AppComponent) handles conversion
+      expect(migrated).toBeFalse();
       expect(mockPrintService.podiumCertificateJson).toBe(CERTIFICATE_JSON);
       expect(mockPrintService.xOffset).toBe(15);
+      expect(mockPrintService.yOffset).toBe(0);
     });
 
-    it('should round-trip visual format through save and load', () => {
-      mockPrintService.podiumCertificateJson = VISUAL_JSON;
+    it('should round-trip template through save and load', () => {
+      mockPrintService.podiumCertificateJson = CERTIFICATE_JSON;
       mockPrintService.podiumCertificateStyleJson = '{"font": "mono"}';
       mockPrintService.pageOrientation = 'landscape';
       mockPrintService.backgroundForPreviewOnly = true;
       mockPrintService.countries = 'IE;GB';
-      mockPrintService.xOffset = 0;
+      mockPrintService.xOffset = 10;
+      mockPrintService.yOffset = -5;
 
       const ext = service.buildExtension();
       const wcif = makeWcif([ext]);
@@ -371,11 +416,39 @@ describe('TemplateExtensionService', () => {
       // Clear and reload
       mockPrintService.podiumCertificateJson = '';
       mockPrintService.countries = '';
+      mockPrintService.xOffset = 0;
+      mockPrintService.yOffset = 0;
       const loaded = service.loadTemplate(wcif);
 
-      expect(loaded).toBeTrue();
-      expect(mockPrintService.podiumCertificateJson).toBe(VISUAL_JSON);
+      expect(loaded).toBe('loaded');
+      expect(mockPrintService.podiumCertificateJson).toBe(CERTIFICATE_JSON);
       expect(mockPrintService.countries).toBe('IE;GB');
+      expect(mockPrintService.xOffset).toBe(10);
+      expect(mockPrintService.yOffset).toBe(-5);
+    });
+  });
+
+  describe('isCurrentVersion', () => {
+    it('should return true for current version', () => {
+      const data = makeTemplateData({templateVersion: CURRENT_TEMPLATE_VERSION});
+      expect(service.isCurrentVersion(data)).toBeTrue();
+    });
+
+    it('should return false when version is missing', () => {
+      const data = makeTemplateData();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (data as any).templateVersion;
+      expect(service.isCurrentVersion(data)).toBeFalse();
+    });
+
+    it('should return false for old version', () => {
+      const data = makeTemplateData({templateVersion: 1});
+      expect(service.isCurrentVersion(data)).toBeFalse();
+    });
+
+    it('should return true for future version', () => {
+      const data = makeTemplateData({templateVersion: CURRENT_TEMPLATE_VERSION + 1});
+      expect(service.isCurrentVersion(data)).toBeTrue();
     });
   });
 });

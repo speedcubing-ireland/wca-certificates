@@ -7,78 +7,23 @@ import {formatCentiseconds} from '@wca/helpers/lib/helpers/time';
 import {decodeMultiResult, formatMultiResult, isDnf} from '@wca/helpers/lib/helpers/result';
 
 import {getEventName, EventId} from '@wca/helpers';
-import {WCIF, PdfDocument, PdfMakeStatic, PdfContentItem, VisualElement} from './types';
+import {WCIF, PdfDocument, PdfMakeStatic, PdfContentItem} from './types';
 import {environment} from '../environments/environment';
 
 declare const pdfMake: PdfMakeStatic;
 
-export const DEFAULT_VISUAL_ELEMENTS: VisualElement[] = [
-  { id: 'event', text: 'certificate.event', x: 280, y: 180, fontSize: 40, bold: true },
-  { id: 'place', text: 'certificate.capitalisedPlace Place', x: 280, y: 240, fontSize: 32, bold: true },
-  { id: 'name', text: 'certificate.name', x: 280, y: 320, fontSize: 40, bold: true },
-  { id: 'result', text: 'with certificate.resultType of certificate.result certificate.resultUnit', x: 280, y: 400, fontSize: 22, bold: false },
-];
-
-export function isVisualFormat(json: string): boolean {
-  try {
-    const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed) || parsed.length === 0) return false;
-    const first = parsed[0];
-    return typeof first === 'object' && first !== null && 'x' in first && 'y' in first;
-  } catch {
-    return false;
-  }
-}
-
-export function convertLegacyTemplate(json: string, xOffset: number): VisualElement[] {
-  try {
-    const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed)) return [...DEFAULT_VISUAL_ELEMENTS];
-
-    const elements: VisualElement[] = [];
-    let yPosition = 60; // start offset (approximate top margin)
-    let elementIndex = 0;
-    const pageCenter = 421;
-
-    for (const item of parsed) {
-      if (typeof item === 'string') {
-        // Count newlines for vertical spacing
-        const newlines = (item.match(/\\n/g) || []).length;
-        yPosition += newlines * 22; // approximate line height
-        // If string has non-newline text, add as element
-        const textContent = item.replace(/\\n/g, '').trim();
-        if (textContent) {
-          elements.push({
-            id: `element-${elementIndex++}`,
-            text: textContent,
-            x: pageCenter + xOffset,
-            y: yPosition,
-            fontSize: 22,
-            bold: false,
-          });
-          yPosition += 30;
-        }
-      } else if (typeof item === 'object' && item !== null) {
-        const text = item.text || '';
-        const fontSize = parseInt(item.fontSize, 10) || 22;
-        const bold = item.bold === true || item.bold === 'true';
-        elements.push({
-          id: `element-${elementIndex++}`,
-          text,
-          x: pageCenter + xOffset,
-          y: yPosition,
-          fontSize,
-          bold,
-        });
-        yPosition += fontSize + 10;
-      }
-    }
-
-    return elements.length > 0 ? elements : [...DEFAULT_VISUAL_ELEMENTS];
-  } catch {
-    return [...DEFAULT_VISUAL_ELEMENTS];
-  }
-}
+export const DEFAULT_CERTIFICATE_JSON = `[
+"\\n\\n\\n\\n\\n",
+{"text": "certificate.event", "fontSize": "40", "bold": "true"},
+"\\n",
+{"text": "certificate.capitalisedPlace Place", "fontSize": "32", "bold": "true"},
+"\\n\\n",
+{"text": "certificate.name", "fontSize": "40", "bold": "true"},
+"\\n\\n",
+"with certificate.resultType of ",
+{"text": "certificate.result", "bold": "true"},
+"  certificate.resultUnit"
+]`;
 
 @Injectable({
   providedIn: 'root'
@@ -91,6 +36,7 @@ export class PrintService {
   public backgroundForPreviewOnly = true;
   public countries = '';
   public xOffset = 0;
+  public yOffset = 0;
 
   public podiumCertificateJson = '';
   public podiumCertificateStyleJson = '';
@@ -118,7 +64,7 @@ export class PrintService {
       },
     }
 
-    this.defaultPodiumCertificateJson = JSON.stringify(DEFAULT_VISUAL_ELEMENTS, null, 2);
+    this.defaultPodiumCertificateJson = DEFAULT_CERTIFICATE_JSON;
     this.podiumCertificateJson = this.defaultPodiumCertificateJson;
 
     const defaultStyle = {
@@ -130,7 +76,7 @@ export class PrintService {
   }
 
   public resetPodiumCertificateJson(): void {
-    this.podiumCertificateJson = JSON.stringify(DEFAULT_VISUAL_ELEMENTS, null, 2);
+    this.podiumCertificateJson = DEFAULT_CERTIFICATE_JSON;
   }
 
   public resetPodiumCertificateStyleJson(): void {
@@ -152,7 +98,7 @@ export class PrintService {
     certificate.resultType = this.getResultType(format, result);
     certificate.result = this.formatResultForEvent(result, eventId);
     certificate.resultUnit = this.getResultUnit(eventId);
-    certificate.locationAndDate = ''; // todo
+    certificate.locationAndDate = '';
     return certificate;
   }
 
@@ -215,24 +161,9 @@ export class PrintService {
     return {
       text: textObject,
       alignment: 'center',
-      margin: [this.xOffset, 0, -this.xOffset, 0],
+      margin: [this.xOffset, this.yOffset, -this.xOffset, -this.yOffset],
       pageBreak: 'after'
     };
-  }
-
-  getOneCertificateContentFromVisualElements(certificate: Certificate): PdfContentItem[] {
-    const elements: VisualElement[] = JSON.parse(this.podiumCertificateJson);
-    const pageWidth = this.pageOrientation === 'landscape' ? 842 : 595;
-
-    return elements.map(el => {
-      const resolvedText = this.replaceStringsIn(el.text, certificate);
-      return {
-        text: resolvedText,
-        fontSize: el.fontSize,
-        bold: el.bold,
-        absolutePosition: { x: el.x, y: el.y },
-      } as PdfContentItem;
-    });
   }
 
   private replaceStringsIn(s: string, certificate: Certificate): string {
@@ -263,37 +194,30 @@ export class PrintService {
   }
 
   private downloadAsPdf(certificates: Certificate[], wcif: WCIF) {
-    const visual = isVisualFormat(this.podiumCertificateJson);
-    const document = this.getDocument(this.pageOrientation, this.background, false, visual);
-    this.addCertificatesToDocument(document, certificates, visual);
-    pdfMake.createPdf(document).download('Certificates ' + wcif.name + '.pdf');
+    const document = this.getDocument(this.pageOrientation, this.background, false);
+    this.addCertificatesToDocument(document, certificates);
+    pdfMake.createPdf(document).getBlob(blob => {
+      saveAs(blob, 'Certificates ' + wcif.name + '.pdf');
+    });
   }
 
   public printCertificatesAsPreview(wcif: WCIF, events: string[]) {
     const certificates: Certificate[] = this.getCertificates(events, wcif);
     if (certificates.length > 0) {
-      const visual = isVisualFormat(this.podiumCertificateJson);
-      const document = this.getDocument(this.pageOrientation, this.background, true, visual);
-      this.addCertificatesToDocument(document, certificates, visual);
-      pdfMake.createPdf(document).open();
+      const document = this.getDocument(this.pageOrientation, this.background, true);
+      this.addCertificatesToDocument(document, certificates);
+      pdfMake.createPdf(document).getBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      });
     }
   }
 
-  private addCertificatesToDocument(document: PdfDocument, certificates: Certificate[], visual: boolean) {
-    if (visual) {
-      certificates.forEach((cert, i) => {
-        const items = this.getOneCertificateContentFromVisualElements(cert);
-        items.forEach(item => document.content.push(item));
-        if (i < certificates.length - 1) {
-          document.content.push({ text: '', pageBreak: 'after' });
-        }
-      });
-    } else {
-      certificates.forEach(cert => {
-        document.content.push(this.getOneCertificateContent(cert));
-      });
-      this.removeLastPageBreak(document);
-    }
+  private addCertificatesToDocument(document: PdfDocument, certificates: Certificate[]) {
+    certificates.forEach(cert => {
+      document.content.push(this.getOneCertificateContent(cert));
+    });
+    this.removeLastPageBreak(document);
   }
 
   private getCertificates(events: string[], wcif: WCIF): Certificate[] {
@@ -301,7 +225,9 @@ export class PrintService {
     const certificates: Certificate[] = [];
     for (const eventId of revEvents) {
       const event: Event = wcif.events.filter(e => e.id === eventId)[0];
+      if (!event?.rounds?.length) continue;
       const podiumPlaces = event['podiumPlaces'];
+      if (!podiumPlaces?.length) continue;
       const format = event.rounds[event.rounds.length - 1].format;
 
       for (const podiumPlace of podiumPlaces) {
@@ -331,11 +257,11 @@ export class PrintService {
     document.content[document.content.length - 1].pageBreak = '';
   }
 
-  private getDocument(orientation: string, background: string | null, isPreview: boolean, visual = false): PdfDocument {
+  private getDocument(orientation: string, background: string | null, isPreview: boolean): PdfDocument {
     const document = {
       pageOrientation: orientation,
       content: [],
-      pageMargins: visual ? [0, 0, 0, 0] : [100, 60, 100, 60],
+      pageMargins: [100, 60, 100, 60],
       styles: {
         tableOverview: {
           lineHeight: 0.8
@@ -346,7 +272,6 @@ export class PrintService {
       }
     };
     if (this.podiumCertificateStyleJson !== '{}') {
-      // append each style to the document
       const styles = JSON.parse(this.podiumCertificateStyleJson);
       for (const key in styles) {
         if (Object.prototype.hasOwnProperty.call(styles, key)) {
@@ -354,7 +279,7 @@ export class PrintService {
         }
       }
     }
-    if (background !== null && (this.backgroundForPreviewOnly === false || isPreview )) {
+    if (background !== null && (this.backgroundForPreviewOnly === false || isPreview)) {
       document['background'] = {
         image: background,
         width: orientation === 'landscape' ? 840 : 594,
@@ -364,8 +289,30 @@ export class PrintService {
     return document;
   }
 
-  private downloadFile(data: string, filename: string) {
-    saveAs(new Blob([data]), filename);
+  public generatePreviewBuffer(callback: (buffer: ArrayBuffer) => void): void {
+    const sample = new Certificate();
+    sample.event = '3x3x3';
+    sample.name = 'Patrick Roger Smith';
+    sample.place = 'first';
+    sample.resultType = 'an average';
+    sample.result = '7.64';
+    sample.resultUnit = '';
+    sample.delegate = 'John Smith';
+    sample.organizers = 'Jane Doe and Bob Wilson';
+    sample.competitionName = 'Example Open 2025';
+    sample.locationAndDate = '';
+
+    const savedXOffset = this.xOffset;
+    const savedYOffset = this.yOffset;
+    this.xOffset = 0;
+    this.yOffset = 0;
+    const document = this.getDocument(this.pageOrientation, null, false);
+    document.content.push(this.getOneCertificateContent(sample));
+    this.removeLastPageBreak(document);
+    this.xOffset = savedXOffset;
+    this.yOffset = savedYOffset;
+
+    pdfMake.createPdf(document).getBuffer(callback);
   }
 
   private getResultUnit(eventId: string) {
@@ -388,6 +335,7 @@ export class PrintService {
       case '1':
       case '2':
       case '3':
+      case '5':
         return 'a best result';
       default:
         return 'a result';

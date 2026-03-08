@@ -1,127 +1,122 @@
 .editor-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 16px;
-  align-items: flex-start;
+}
+
+.preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .preview-page {
   position: relative;
   width: 700px;
   flex-shrink: 0;
-  background-color: #1a1a2e;
-  background-size: cover;
-  background-position: center;
+  background-color: #ffffff;
   border: 1px solid var(--border-color, #374151);
   border-radius: 4px;
   overflow: hidden;
-  cursor: default;
-}
-
-.visual-element {
-  position: absolute;
-  color: #ffffff;
-  white-space: nowrap;
+  cursor: grab;
   user-select: none;
 }
 
-.visual-element-text {
-  display: inline-block;
-  padding: 2px 6px;
-  margin: -3px -7px;
-  border: 1px dashed transparent;
-  border-radius: 2px;
-  transition: border-color 0.15s ease;
-  cursor: move;
+.preview-page.dragging {
+  cursor: grabbing;
 }
 
-.visual-element:hover .visual-element-text {
-  border-color: rgba(255, 255, 255, 0.4);
+/* Background image layer — always stationary behind the text canvas */
+.preview-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.visual-element.selected .visual-element-text {
-  border-color: var(--accent-primary, #00d4ff);
-  background: rgba(0, 212, 255, 0.1);
+.preview-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
 }
 
-/* CDK drag preview */
-.visual-element.cdk-drag-dragging {
-  opacity: 0.8;
+.preview-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 2;
 }
 
-.visual-element.cdk-drag-placeholder {
-  opacity: 0;
-}
-
-.controls-panel {
-  width: 360px;
-  flex-shrink: 0;
+.slider-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 700px;
   background: var(--bg-tertiary, #1f2937);
   border: 1px solid var(--border-color, #374151);
   border-radius: 4px;
-  padding: 16px;
+  padding: 12px 16px;
 }
 
-.controls-panel h4 {
-  margin: 0 0 12px 0;
-  color: var(--accent-primary, #00d4ff);
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.lock-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 4px;
 }
 
-.control-row {
+.lock-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lock-toggle input[type="checkbox"] {
+  accent-color: var(--accent-primary, #00d4ff);
+  cursor: pointer;
+}
+
+.slider-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
 }
 
-.control-row label {
+.slider-row label {
   color: var(--text-secondary, #9ca3af);
-  min-width: 100px;
   font-size: 12px;
+  min-width: 70px;
 }
 
-.control-row input[type="text"] {
+.slider-row input[type="range"] {
   flex: 1;
-  background: var(--bg-secondary, #111827);
-  border: 1px solid var(--border-color, #374151);
-  color: var(--text-primary, #e5e7eb);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 12px;
-}
-
-.control-row input[type="number"] {
-  width: 80px;
-  background: var(--bg-secondary, #111827);
-  border: 1px solid var(--border-color, #374151);
-  color: var(--text-primary, #e5e7eb);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 12px;
-}
-
-.control-row input[type="checkbox"] {
   accent-color: var(--accent-primary, #00d4ff);
+  height: 4px;
+  cursor: pointer;
 }
 
-.control-row.coordinates {
-  gap: 24px;
-  color: var(--text-muted, #6b7280);
-  font-size: 11px;
-}
-
-.element-name {
+.offset-value {
   color: var(--text-primary, #e5e7eb);
   font-size: 12px;
-}
-
-.hint-text {
-  color: var(--text-muted, #6b7280);
-  font-size: 12px;
-  margin: 0;
+  min-width: 60px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }

@@ -5,7 +5,7 @@ import {map} from 'rxjs/operators';
 import {environment} from '../environments/environment';
 import {AuthService} from './auth';
 import {PrintService} from './print';
-import {WCIF, WcifExtension, PodiumTemplateExtensionData} from './types';
+import {WCIF, WcifExtension, PodiumTemplateExtensionData, CURRENT_TEMPLATE_VERSION} from './types';
 
 const EXTENSION_ID = 'io.github.speedcubing_ireland.podiumTemplate';
 const SPEC_URL = 'https://github.com/speedcubing-ireland/wca-certificates';
@@ -31,12 +31,14 @@ export class TemplateExtensionService {
 
   buildExtension(): WcifExtension {
     const data: PodiumTemplateExtensionData = {
+      templateVersion: CURRENT_TEMPLATE_VERSION,
       podiumCertificateJson: this.printService.podiumCertificateJson,
       podiumCertificateStyleJson: this.printService.podiumCertificateStyleJson,
       pageOrientation: this.printService.pageOrientation,
       backgroundForPreviewOnly: this.printService.backgroundForPreviewOnly,
       countries: this.printService.countries,
-      xOffset: this.printService.xOffset
+      xOffset: this.printService.xOffset,
+      yOffset: this.printService.yOffset
     };
     return {
       id: EXTENSION_ID,
@@ -45,20 +47,34 @@ export class TemplateExtensionService {
     };
   }
 
-  applyTemplate(data: PodiumTemplateExtensionData): void {
-    this.printService.podiumCertificateJson = data.podiumCertificateJson;
+  isCurrentVersion(data: PodiumTemplateExtensionData): boolean {
+    return (data.templateVersion ?? 0) >= CURRENT_TEMPLATE_VERSION;
+  }
+
+  applyTemplate(data: PodiumTemplateExtensionData): boolean {
+    const migrated = !this.isCurrentVersion(data);
+
+    if (migrated) {
+      this.printService.podiumCertificateJson = this.printService.defaultPodiumCertificateJson;
+    } else {
+      this.printService.podiumCertificateJson = data.podiumCertificateJson;
+    }
+
     this.printService.podiumCertificateStyleJson = data.podiumCertificateStyleJson;
     this.printService.pageOrientation = data.pageOrientation;
     this.printService.backgroundForPreviewOnly = data.backgroundForPreviewOnly;
     this.printService.countries = data.countries;
     this.printService.xOffset = data.xOffset;
+    this.printService.yOffset = data.yOffset ?? 0;
+
+    return migrated;
   }
 
-  loadTemplate(wcif: WCIF): boolean {
+  loadTemplate(wcif: WCIF): 'loaded' | 'migrated' | null {
     const data = this.extractTemplate(wcif);
-    if (!data) return false;
-    this.applyTemplate(data);
-    return true;
+    if (!data) return null;
+    const migrated = this.applyTemplate(data);
+    return migrated ? 'migrated' : 'loaded';
   }
 
   saveTemplate(competitionId: string, wcif: WCIF): Observable<boolean> {

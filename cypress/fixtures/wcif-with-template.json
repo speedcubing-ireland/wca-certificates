@@ -160,12 +160,14 @@
       "id": "io.github.speedcubing_ireland.podiumTemplate",
       "specUrl": "https://github.com/speedcubing-ireland/wca-certificates",
       "data": {
-        "podiumCertificateJson": "[{\"id\":\"event\",\"text\":\"certificate.event\",\"x\":421,\"y\":200,\"fontSize\":36,\"bold\":true},{\"id\":\"place\",\"text\":\"certificate.capitalisedPlace Place\",\"x\":421,\"y\":260,\"fontSize\":28,\"bold\":true},{\"id\":\"name\",\"text\":\"certificate.name\",\"x\":421,\"y\":340,\"fontSize\":36,\"bold\":true},{\"id\":\"result\",\"text\":\"with certificate.resultType of certificate.result certificate.resultUnit\",\"x\":421,\"y\":420,\"fontSize\":20,\"bold\":false}]",
+        "templateVersion": 2,
+        "podiumCertificateJson": "[\"\\n\\n\\n\\n\\n\",{\"text\":\"certificate.event\",\"fontSize\":\"40\",\"bold\":\"true\"},\"\\n\",{\"text\":\"certificate.capitalisedPlace Place\",\"fontSize\":\"32\",\"bold\":\"true\"},\"\\n\\n\",{\"text\":\"certificate.name\",\"fontSize\":\"40\",\"bold\":\"true\"},\"\\n\\n\",\"with certificate.resultType of \",{\"text\":\"certificate.result\",\"bold\":\"true\"},\"  certificate.resultUnit\"]",
         "podiumCertificateStyleJson": "{\"font\": \"mono\"}",
         "pageOrientation": "portrait",
         "backgroundForPreviewOnly": false,
         "countries": "IE",
-        "xOffset": 0
+        "xOffset": 0,
+        "yOffset": 0
       }
     }
   ]

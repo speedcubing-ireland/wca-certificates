@@ -83,6 +83,7 @@ describe('AppComponent', () => {
       backgroundForPreviewOnly: true,
       countries: '',
       xOffset: 0,
+      yOffset: 0,
       showLocalNames: false,
       background: null,
       defaultPodiumCertificateJson: '[]',

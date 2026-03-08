@@ -1,8 +1,13 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {
+  Component, OnInit, OnDestroy, OnChanges, SimpleChanges,
+  Input, Output, EventEmitter, NgZone, ViewChild, ElementRef, AfterViewInit
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {CdkDrag, CdkDragEnd, CdkDragHandle} from '@angular/cdk/drag-drop';
-import {VisualElement} from '../../common/types';
+import {PrintService} from '../../common/print';
+import {PdfjsLib} from '../../common/types';
+
+declare const pdfjsLib: PdfjsLib;
 
 const PDF_LANDSCAPE_WIDTH = 842;
 const PDF_LANDSCAPE_HEIGHT = 595;
@@ -10,34 +15,72 @@ const PDF_PORTRAIT_WIDTH = 595;
 const PDF_PORTRAIT_HEIGHT = 842;
 const PREVIEW_WIDTH = 700;
 
-const SAMPLE_VALUES: Record<string, string> = {
-  'certificate.delegate': 'John Smith',
-  'certificate.organizers': 'Jane Doe and Bob Wilson',
-  'certificate.competitionName': 'Example Open 2025',
-  'certificate.name': 'Patrick Roger Smith',
-  'certificate.capitalisedPlace': 'First',
-  'certificate.place': 'first',
-  'certificate.event': '3x3x3',
-  'certificate.resultType': 'an average',
-  'certificate.resultUnit': '',
-  'certificate.result': '7.64',
-  'certificate.locationAndDate': '',
-};
-
 @Component({
   selector: 'app-certificate-editor',
   templateUrl: './certificate-editor.component.html',
   styleUrls: ['./certificate-editor.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, CdkDrag, CdkDragHandle],
+  imports: [CommonModule, FormsModule],
 })
-export class CertificateEditorComponent {
+export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   @Input() orientation: 'landscape' | 'portrait' = 'landscape';
   @Input() backgroundImage: string | null = null;
-  @Input() elements: VisualElement[] = [];
-  @Output() elementsChange = new EventEmitter<VisualElement[]>();
+  @Input() templateJson = '';
+  @Input() styleJson = '';
+  @Input() xOffset = 0;
+  @Input() yOffset = 0;
+  @Output() xOffsetChange = new EventEmitter<number>();
+  @Output() yOffsetChange = new EventEmitter<number>();
 
-  selectedElementId: string | null = null;
+  @ViewChild('previewCanvas') canvasRef: ElementRef<HTMLCanvasElement>;
+
+  /** Whether the PDF is currently being regenerated */
+  loading = false;
+  /** Whether we have rendered at least once */
+  hasRendered = false;
+
+  /** Drag state */
+  dragging = false;
+  lockX = true;
+  lockY = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private dragStartOffsetX = 0;
+  private dragStartOffsetY = 0;
+
+  /** Bound event handlers (so we can remove them) */
+  private boundOnMouseMove = this.onMouseMove.bind(this);
+  private boundOnMouseUp = this.onMouseUp.bind(this);
+
+  constructor(
+    public printService: PrintService,
+    private ngZone: NgZone,
+  ) {}
+
+  ngOnInit(): void {
+    // Disable PDF.js web worker (use main thread — our PDFs are tiny, one page)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+  }
+
+  ngAfterViewInit(): void {
+    this.regeneratePdf();
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('mousemove', this.boundOnMouseMove);
+    document.removeEventListener('mouseup', this.boundOnMouseUp);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only regenerate the PDF when structural properties change (not offsets)
+    const structuralKeys = ['orientation', 'templateJson', 'styleJson'];
+    const hasStructural = structuralKeys.some(k => changes[k] && !changes[k].firstChange);
+    if (hasStructural) {
+      this.regeneratePdf();
+    }
+  }
+
+  // --- Computed dimensions ---
 
   get pdfWidth(): number {
     return this.orientation === 'landscape' ? PDF_LANDSCAPE_WIDTH : PDF_PORTRAIT_WIDTH;
@@ -55,63 +98,116 @@ export class CertificateEditorComponent {
     return this.pdfHeight * this.scale;
   }
 
-  get selectedElement(): VisualElement | null {
-    if (!this.selectedElementId) return null;
-    return this.elements.find(el => el.id === this.selectedElementId) || null;
+  /** Max horizontal offset (half the page width) */
+  get maxXOffset(): number {
+    return Math.round(this.pdfWidth / 2);
   }
 
-  selectElement(id: string, event: MouseEvent): void {
-    event.stopPropagation();
-    this.selectedElementId = id;
+  /** Max vertical offset (half the page height) */
+  get maxYOffset(): number {
+    return Math.round(this.pdfHeight / 2);
   }
 
-  deselectAll(): void {
-    this.selectedElementId = null;
+  /** CSS translate for the canvas, converting pt offsets to preview px */
+  get canvasTranslate(): string {
+    const px = this.xOffset * this.scale;
+    const py = this.yOffset * this.scale;
+    return `translate(${px}px, ${py}px)`;
   }
 
-  onDragEnded(event: CdkDragEnd, element: VisualElement): void {
-    const delta = event.distance;
-    element.x += delta.x / this.scale;
-    element.y += delta.y / this.scale;
-    event.source.reset();
-    this.emitChange();
+  // --- Offset controls ---
+
+  onXOffsetChange(value: number): void {
+    this.xOffset = Number(value);
+    this.xOffsetChange.emit(this.xOffset);
   }
 
-  resolvePreviewText(text: string): string {
-    let resolved = text;
-    // Replace longer placeholders first to avoid partial matches
-    const keys = Object.keys(SAMPLE_VALUES).sort((a, b) => b.length - a.length);
-    for (const key of keys) {
-      resolved = resolved.replace(new RegExp(key.replace('.', '\\.'), 'g'), SAMPLE_VALUES[key]);
+  onYOffsetChange(value: number): void {
+    this.yOffset = Number(value);
+    this.yOffsetChange.emit(this.yOffset);
+  }
+
+  // --- Drag support (offsets only — no PDF regeneration needed) ---
+
+  onMouseDown(event: MouseEvent): void {
+    event.preventDefault();
+    this.dragging = true;
+    this.dragStartX = event.clientX;
+    this.dragStartY = event.clientY;
+    this.dragStartOffsetX = this.xOffset;
+    this.dragStartOffsetY = this.yOffset;
+    document.addEventListener('mousemove', this.boundOnMouseMove);
+    document.addEventListener('mouseup', this.boundOnMouseUp);
+  }
+
+  private onMouseMove(event: MouseEvent): void {
+    if (!this.dragging) return;
+    const dx = (event.clientX - this.dragStartX) / this.scale;
+    const dy = (event.clientY - this.dragStartY) / this.scale;
+
+    if (!this.lockX) {
+      const newX = Math.round(Math.max(-this.maxXOffset, Math.min(this.maxXOffset, this.dragStartOffsetX + dx)));
+      if (newX !== this.xOffset) {
+        this.xOffset = newX;
+        this.xOffsetChange.emit(this.xOffset);
+      }
     }
-    return resolved;
-  }
-
-  onFontSizeChange(value: number): void {
-    const el = this.selectedElement;
-    if (el) {
-      el.fontSize = value;
-      this.emitChange();
+    if (!this.lockY) {
+      const newY = Math.round(Math.max(-this.maxYOffset, Math.min(this.maxYOffset, this.dragStartOffsetY + dy)));
+      if (newY !== this.yOffset) {
+        this.yOffset = newY;
+        this.yOffsetChange.emit(this.yOffset);
+      }
     }
   }
 
-  onBoldChange(value: boolean): void {
-    const el = this.selectedElement;
-    if (el) {
-      el.bold = value;
-      this.emitChange();
-    }
+  private onMouseUp(): void {
+    this.dragging = false;
+    document.removeEventListener('mousemove', this.boundOnMouseMove);
+    document.removeEventListener('mouseup', this.boundOnMouseUp);
   }
 
-  onTextChange(value: string): void {
-    const el = this.selectedElement;
-    if (el) {
-      el.text = value;
-      this.emitChange();
-    }
+  // --- PDF rendering to canvas via PDF.js ---
+
+  /**
+   * Regenerate the PDF buffer (text only, no background, offsets at 0,0)
+   * and render it to the canvas with a transparent background.
+   * Only called when template/style/orientation change — NOT on offset changes.
+   */
+  regeneratePdf(): void {
+    if (!this.canvasRef) return;
+    this.loading = true;
+
+    this.ngZone.runOutsideAngular(() => {
+      this.printService.generatePreviewBuffer((buffer: ArrayBuffer) => {
+        this.renderBufferToCanvas(buffer).then(() => {
+          this.ngZone.run(() => {
+            this.loading = false;
+            this.hasRendered = true;
+          });
+        });
+      });
+    });
   }
 
-  private emitChange(): void {
-    this.elementsChange.emit([...this.elements]);
+  private async renderBufferToCanvas(buffer: ArrayBuffer): Promise<void> {
+    const canvas = this.canvasRef.nativeElement;
+    const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+    const page = await pdf.getPage(1);
+
+    // Scale to fit PREVIEW_WIDTH
+    const viewport = page.getViewport({scale: this.scale});
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const ctx = canvas.getContext('2d');
+    // Clear to transparent
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    await page.render({
+      canvasContext: ctx,
+      viewport,
+      background: 'rgba(0,0,0,0)',
+    }).promise;
   }
 }

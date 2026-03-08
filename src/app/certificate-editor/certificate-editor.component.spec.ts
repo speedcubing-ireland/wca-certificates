@@ -1,29 +1,65 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {CertificateEditorComponent} from './certificate-editor.component';
-import {VisualElement} from '../../common/types';
-import {CdkDragEnd} from '@angular/cdk/drag-drop';
+import {PrintService} from '../../common/print';
 
-function makeElements(): VisualElement[] {
-  return [
-    {id: 'event', text: 'certificate.event', x: 421, y: 180, fontSize: 40, bold: true},
-    {id: 'place', text: 'certificate.capitalisedPlace Place', x: 421, y: 240, fontSize: 32, bold: true},
-    {id: 'name', text: 'certificate.name', x: 421, y: 320, fontSize: 40, bold: true},
-    {id: 'result', text: 'with certificate.resultType of certificate.result certificate.resultUnit', x: 421, y: 400, fontSize: 22, bold: false},
-  ];
+class MockPrintService {
+  pageOrientation: 'landscape' | 'portrait' = 'landscape';
+  background: string | null = null;
+  backgroundForPreviewOnly = true;
+  xOffset = 0;
+  yOffset = 0;
+  podiumCertificateJson = '[]';
+  podiumCertificateStyleJson = '{}';
+
+  private _lastCallback: ((buffer: ArrayBuffer) => void) | null = null;
+
+  generatePreviewBuffer(callback: (buffer: ArrayBuffer) => void): void {
+    this._lastCallback = callback;
+  }
+
+  resolvePreview(): void {
+    if (this._lastCallback) {
+      this._lastCallback(new ArrayBuffer(0));
+      this._lastCallback = null;
+    }
+  }
 }
+
+(window as unknown as Record<string, unknown>)['pdfjsLib'] = {
+  GlobalWorkerOptions: {workerSrc: ''},
+  getDocument: () => ({
+    promise: Promise.resolve({
+      getPage: () => Promise.resolve({
+        getViewport: () => ({width: 700, height: 495}),
+        render: () => ({promise: Promise.resolve()}),
+      }),
+    }),
+  }),
+};
 
 describe('CertificateEditorComponent', () => {
   let component: CertificateEditorComponent;
   let fixture: ComponentFixture<CertificateEditorComponent>;
+  let mockPrint: MockPrintService;
 
   beforeEach(async () => {
+    mockPrint = new MockPrintService();
+
     await TestBed.configureTestingModule({
-      imports: [CertificateEditorComponent]
+      imports: [CertificateEditorComponent],
+      providers: [
+        {provide: PrintService, useValue: mockPrint},
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CertificateEditorComponent);
     component = fixture.componentInstance;
-    component.elements = makeElements();
+    component.xOffset = 0;
+    component.yOffset = 0;
+    fixture.detectChanges();
+    // Resolve the initial preview load
+    mockPrint.resolvePreview();
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -35,8 +71,8 @@ describe('CertificateEditorComponent', () => {
       expect(previewEl).toBeTruthy();
       expect(previewEl.style.width).toBe('700px');
       // landscape: 595 * (700/842) ≈ 494.77
-      const expectedHeight = Math.round(595 * (700 / 842));
-      expect(Math.round(parseFloat(previewEl.style.height))).toBeCloseTo(expectedHeight, 0);
+      const expectedHeight = 595 * (700 / 842);
+      expect(Math.abs(parseFloat(previewEl.style.height) - expectedHeight)).toBeLessThan(1);
     });
 
     it('should render a preview container with correct dimensions for portrait', () => {
@@ -46,160 +82,211 @@ describe('CertificateEditorComponent', () => {
       expect(previewEl).toBeTruthy();
       expect(previewEl.style.width).toBe('700px');
       // portrait: 842 * (700/595) ≈ 990.76
-      const expectedHeight = Math.round(842 * (700 / 595));
-      expect(Math.round(parseFloat(previewEl.style.height))).toBeCloseTo(expectedHeight, 0);
+      const expectedHeight = 842 * (700 / 595);
+      expect(Math.abs(parseFloat(previewEl.style.height) - expectedHeight)).toBeLessThan(1);
     });
   });
 
-  describe('element rendering', () => {
-    it('should display all visual elements with resolved placeholder text', () => {
-      const elementDivs = fixture.nativeElement.querySelectorAll('[data-cy="visual-element"]');
-      expect(elementDivs.length).toBe(4);
-      expect(elementDivs[0].textContent.trim()).toContain('3x3x3');
-      expect(elementDivs[1].textContent.trim()).toContain('First Place');
-      expect(elementDivs[2].textContent.trim()).toContain('Patrick Roger Smith');
-      expect(elementDivs[3].textContent.trim()).toContain('an average');
+  describe('canvas preview', () => {
+    it('should display a canvas element for the text preview', () => {
+      const canvas: HTMLCanvasElement = fixture.nativeElement.querySelector('[data-cy="preview-canvas"]');
+      expect(canvas).toBeTruthy();
+      expect(canvas.tagName).toBe('CANVAS');
+    });
+
+    it('should call generatePreviewBuffer on init', () => {
+      // The mock was called during setup (and we resolved it)
+      expect(component.hasRendered).toBeTrue();
     });
 
     it('should show background image when provided', () => {
       component.backgroundImage = 'data:image/png;base64,ABC123';
       fixture.detectChanges();
-      const previewEl: HTMLElement = fixture.nativeElement.querySelector('[data-cy="preview-area"]');
-      expect(previewEl.style.backgroundImage).toContain('data:image/png;base64,ABC123');
+      const bgImg: HTMLImageElement = fixture.nativeElement.querySelector('[data-cy="preview-background"]');
+      expect(bgImg).toBeTruthy();
+      expect(bgImg.src).toContain('data:image/png;base64,ABC123');
     });
 
-    it('should not set background image when null', () => {
+    it('should not show background image when null', () => {
       component.backgroundImage = null;
       fixture.detectChanges();
+      const bgImg = fixture.nativeElement.querySelector('[data-cy="preview-background"]');
+      expect(bgImg).toBeFalsy();
+    });
+
+    it('should apply CSS translate for offsets on canvas', () => {
+      component.xOffset = 100;
+      component.yOffset = 50;
+      fixture.detectChanges();
+      const canvas: HTMLElement = fixture.nativeElement.querySelector('[data-cy="preview-canvas"]');
+      const transform = canvas.style.transform;
+      const expectedX = 100 * component.scale;
+      const expectedY = 50 * component.scale;
+      expect(transform).toContain(`translate(${expectedX}px, ${expectedY}px)`);
+    });
+  });
+
+  describe('offset sliders', () => {
+    it('should display x and y offset sliders', () => {
+      const xSlider = fixture.nativeElement.querySelector('[data-cy="x-offset-slider"]');
+      const ySlider = fixture.nativeElement.querySelector('[data-cy="y-offset-slider"]');
+      expect(xSlider).toBeTruthy();
+      expect(ySlider).toBeTruthy();
+    });
+
+    it('should emit xOffsetChange when x slider changes', () => {
+      spyOn(component.xOffsetChange, 'emit');
+      component.onXOffsetChange(50);
+      expect(component.xOffset).toBe(50);
+      expect(component.xOffsetChange.emit).toHaveBeenCalledWith(50);
+    });
+
+    it('should emit yOffsetChange when y slider changes', () => {
+      spyOn(component.yOffsetChange, 'emit');
+      component.onYOffsetChange(-30);
+      expect(component.yOffset).toBe(-30);
+      expect(component.yOffsetChange.emit).toHaveBeenCalledWith(-30);
+    });
+
+    it('should display offset values in the UI', () => {
+      component.xOffset = 25;
+      component.yOffset = -10;
+      fixture.detectChanges();
+      const xValue: HTMLElement = fixture.nativeElement.querySelector('[data-cy="x-offset-value"]');
+      const yValue: HTMLElement = fixture.nativeElement.querySelector('[data-cy="y-offset-value"]');
+      expect(xValue.textContent).toContain('25pt');
+      expect(yValue.textContent).toContain('-10pt');
+    });
+
+    it('should NOT regenerate PDF when offsets change (CSS only)', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.onXOffsetChange(50);
+      component.onYOffsetChange(30);
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('drag support', () => {
+    it('should update offsets on drag', () => {
+      component.lockX = false; // unlock X for this test
+      component.lockY = false;
+      spyOn(component.xOffsetChange, 'emit');
+      spyOn(component.yOffsetChange, 'emit');
+
       const previewEl: HTMLElement = fixture.nativeElement.querySelector('[data-cy="preview-area"]');
-      expect(previewEl.style.backgroundImage).toBe('none');
-    });
-  });
+      previewEl.dispatchEvent(new MouseEvent('mousedown', {clientX: 100, clientY: 100}));
 
-  describe('element selection', () => {
-    it('should select an element on click', () => {
-      const elementDiv = fixture.nativeElement.querySelector('[data-cy="visual-element"]');
-      elementDiv.click();
-      fixture.detectChanges();
-      expect(component.selectedElementId).toBe('event');
-      expect(elementDiv.classList.contains('selected')).toBeTrue();
-    });
+      expect(component.dragging).toBeTrue();
 
-    it('should show controls panel when an element is selected', () => {
-      component.selectedElementId = 'event';
+      // Simulate mouse move
+      document.dispatchEvent(new MouseEvent('mousemove', {clientX: 150, clientY: 120}));
       fixture.detectChanges();
-      const controlsPanel = fixture.nativeElement.querySelector('[data-cy="controls-panel"]');
-      expect(controlsPanel).toBeTruthy();
+
+      expect(component.xOffsetChange.emit).toHaveBeenCalled();
+      expect(component.yOffsetChange.emit).toHaveBeenCalled();
+
+      // Release
+      document.dispatchEvent(new MouseEvent('mouseup'));
+      expect(component.dragging).toBeFalse();
     });
 
-    it('should show hint text when no element is selected', () => {
-      component.selectedElementId = null;
-      fixture.detectChanges();
-      const controlsPanel = fixture.nativeElement.querySelector('[data-cy="controls-panel"]');
-      expect(controlsPanel).toBeTruthy();
-      const hint = controlsPanel.querySelector('.hint-text');
-      expect(hint).toBeTruthy();
-      expect(hint.textContent).toContain('Click an element');
-    });
+    it('should not change x when lockX is true', () => {
+      component.lockX = true;
+      component.xOffset = 10;
 
-    it('should deselect all when clicking the preview area', () => {
-      component.selectedElementId = 'event';
-      fixture.detectChanges();
       const previewEl: HTMLElement = fixture.nativeElement.querySelector('[data-cy="preview-area"]');
-      previewEl.click();
-      fixture.detectChanges();
-      expect(component.selectedElementId).toBeNull();
+      previewEl.dispatchEvent(new MouseEvent('mousedown', {clientX: 100, clientY: 100}));
+
+      document.dispatchEvent(new MouseEvent('mousemove', {clientX: 200, clientY: 100}));
+      expect(component.xOffset).toBe(10); // unchanged
+
+      document.dispatchEvent(new MouseEvent('mouseup'));
+    });
+
+    it('should not change y when lockY is true', () => {
+      component.lockY = true;
+      component.yOffset = 10;
+
+      const previewEl: HTMLElement = fixture.nativeElement.querySelector('[data-cy="preview-area"]');
+      previewEl.dispatchEvent(new MouseEvent('mousedown', {clientX: 100, clientY: 100}));
+
+      document.dispatchEvent(new MouseEvent('mousemove', {clientX: 100, clientY: 200}));
+      expect(component.yOffset).toBe(10); // unchanged
+
+      document.dispatchEvent(new MouseEvent('mouseup'));
+    });
+
+    it('should NOT regenerate PDF during drag (CSS transform only)', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+
+      const previewEl: HTMLElement = fixture.nativeElement.querySelector('[data-cy="preview-area"]');
+      previewEl.dispatchEvent(new MouseEvent('mousedown', {clientX: 100, clientY: 100}));
+      document.dispatchEvent(new MouseEvent('mousemove', {clientX: 200, clientY: 200}));
+      document.dispatchEvent(new MouseEvent('mouseup'));
+
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
     });
   });
 
-  describe('drag handling', () => {
-    it('should update element position on drag end', () => {
-      const element = component.elements[0];
-      const originalX = element.x;
-      const originalY = element.y;
-
-      const mockDragEnd = {
-        distance: {x: 50, y: 30},
-        source: {reset: jasmine.createSpy('reset')}
-      } as unknown as CdkDragEnd;
-
-      component.onDragEnded(mockDragEnd, element);
-
-      const expectedDeltaX = 50 / component.scale;
-      const expectedDeltaY = 30 / component.scale;
-      expect(element.x).toBeCloseTo(originalX + expectedDeltaX, 1);
-      expect(element.y).toBeCloseTo(originalY + expectedDeltaY, 1);
-      expect(mockDragEnd.source.reset).toHaveBeenCalled();
-    });
-
-    it('should emit elementsChange after drag', () => {
-      spyOn(component.elementsChange, 'emit');
-      const element = component.elements[0];
-
-      const mockDragEnd = {
-        distance: {x: 10, y: 10},
-        source: {reset: jasmine.createSpy('reset')}
-      } as unknown as CdkDragEnd;
-
-      component.onDragEnded(mockDragEnd, element);
-
-      expect(component.elementsChange.emit).toHaveBeenCalledTimes(1);
+  describe('lock toggles', () => {
+    it('should display lock-x and lock-y checkboxes', () => {
+      const lockX = fixture.nativeElement.querySelector('[data-cy="lock-x"]');
+      const lockY = fixture.nativeElement.querySelector('[data-cy="lock-y"]');
+      expect(lockX).toBeTruthy();
+      expect(lockY).toBeTruthy();
     });
   });
 
-  describe('controls panel', () => {
-    it('should update fontSize and emit change', () => {
-      spyOn(component.elementsChange, 'emit');
-      component.selectedElementId = 'event';
-      fixture.detectChanges();
-
-      component.onFontSizeChange(50);
-
-      expect(component.elements[0].fontSize).toBe(50);
-      expect(component.elementsChange.emit).toHaveBeenCalledTimes(1);
+  describe('PDF regeneration', () => {
+    it('should regenerate PDF when orientation changes', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.orientation = 'portrait';
+      component.ngOnChanges({
+        orientation: {currentValue: 'portrait', previousValue: 'landscape', firstChange: false, isFirstChange: () => false}
+      });
+      expect(mockPrint.generatePreviewBuffer).toHaveBeenCalled();
     });
 
-    it('should update bold and emit change', () => {
-      spyOn(component.elementsChange, 'emit');
-      component.selectedElementId = 'result';
-      fixture.detectChanges();
-
-      component.onBoldChange(true);
-
-      expect(component.elements[3].bold).toBeTrue();
-      expect(component.elementsChange.emit).toHaveBeenCalledTimes(1);
+    it('should regenerate PDF when templateJson changes', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.ngOnChanges({
+        templateJson: {currentValue: '["new"]', previousValue: '["old"]', firstChange: false, isFirstChange: () => false}
+      });
+      expect(mockPrint.generatePreviewBuffer).toHaveBeenCalled();
     });
 
-    it('should update text template and emit change', () => {
-      spyOn(component.elementsChange, 'emit');
-      component.selectedElementId = 'event';
-      fixture.detectChanges();
-
-      component.onTextChange('Custom Text');
-
-      expect(component.elements[0].text).toBe('Custom Text');
-      expect(component.elementsChange.emit).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('resolvePreviewText', () => {
-    it('should replace certificate placeholders with sample values', () => {
-      expect(component.resolvePreviewText('certificate.event')).toBe('3x3x3');
-      expect(component.resolvePreviewText('certificate.name')).toBe('Patrick Roger Smith');
+    it('should regenerate PDF when styleJson changes', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.ngOnChanges({
+        styleJson: {currentValue: '{"font":"mono"}', previousValue: '{}', firstChange: false, isFirstChange: () => false}
+      });
+      expect(mockPrint.generatePreviewBuffer).toHaveBeenCalled();
     });
 
-    it('should handle text with multiple placeholders', () => {
-      const result = component.resolvePreviewText('with certificate.resultType of certificate.result');
-      expect(result).toBe('with an average of 7.64');
+    it('should NOT regenerate on first change (handled by ngAfterViewInit)', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.ngOnChanges({
+        orientation: {currentValue: 'landscape', previousValue: undefined, firstChange: true, isFirstChange: () => true}
+      });
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
     });
 
-    it('should replace certificate.capitalisedPlace before certificate.place', () => {
-      const result = component.resolvePreviewText('certificate.capitalisedPlace Place');
-      expect(result).toBe('First Place');
+    it('should NOT regenerate when only offsets change', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.ngOnChanges({
+        xOffset: {currentValue: 50, previousValue: 0, firstChange: false, isFirstChange: () => false},
+        yOffset: {currentValue: 30, previousValue: 0, firstChange: false, isFirstChange: () => false}
+      });
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
     });
 
-    it('should return plain text unchanged', () => {
-      expect(component.resolvePreviewText('Hello World')).toBe('Hello World');
+    it('should NOT regenerate when only backgroundImage changes', () => {
+      spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
+      component.ngOnChanges({
+        backgroundImage: {currentValue: 'data:image/png;base64,NEW', previousValue: null, firstChange: false, isFirstChange: () => false}
+      });
+      // Background is rendered as a separate CSS layer, not in the PDF
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
     });
   });
 });
