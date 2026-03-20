@@ -19,11 +19,7 @@ export class AuthService implements OnDestroy {
   });
 
   private storageListener = (event: StorageEvent) => {
-    if (event.key === TOKEN_KEY || event.key === TOKEN_EXPIRES_AT_KEY || event.key === null) {
-      this.ngZone.run(() => {
-        this.syncSessionFromStorage();
-      });
-    }
+    this.ngZone.run(() => this.applyStorageEvent(event));
   };
 
   private popupPollInterval: ReturnType<typeof setInterval> | null = null;
@@ -99,8 +95,61 @@ export class AuthService implements OnDestroy {
     this.scheduleExpiry(expiresAt);
   }
 
+  private applyStorageEvent(event: StorageEvent): void {
+    if (event.key === TOKEN_KEY) {
+      this.applyTokenUpdate(event.newValue);
+      return;
+    }
+
+    if (event.key === TOKEN_EXPIRES_AT_KEY) {
+      this.applyExpiryUpdate(event.newValue);
+      return;
+    }
+
+    if (event.key === null) {
+      this.syncSessionFromStorage();
+    }
+  }
+
+  private applyTokenUpdate(token: string | null): void {
+    if (!token) {
+      this.accessToken.set(null);
+      this.tokenExpiresAt.set(null);
+      this.clearExpiryTimeout();
+      return;
+    }
+
+    // Use expiry from storage when available, but ignore stale/expired values
+    // so token+expiry events arriving in sequence don't clear a fresh login.
+    const expiresAt = this.readStoredExpiry();
+    const safeExpiry = this.isExpired(expiresAt) ? null : expiresAt;
+    this.accessToken.set(token);
+    this.tokenExpiresAt.set(safeExpiry);
+    this.scheduleExpiry(safeExpiry);
+  }
+
+  private applyExpiryUpdate(rawExpiry: string | null): void {
+    const expiresAt = this.parseExpiry(rawExpiry);
+    this.tokenExpiresAt.set(expiresAt);
+
+    if (!this.accessToken()) {
+      this.clearExpiryTimeout();
+      return;
+    }
+
+    if (this.isExpired(expiresAt)) {
+      this.clearSession();
+      return;
+    }
+
+    this.scheduleExpiry(expiresAt);
+  }
+
   private readStoredExpiry(): number | null {
-    const raw = localStorage.getItem(TOKEN_EXPIRES_AT_KEY);
+    return this.parseExpiry(localStorage.getItem(TOKEN_EXPIRES_AT_KEY));
+  }
+
+  private parseExpiry(raw: string | null): number | null {
     if (!raw) return null;
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
