@@ -10,8 +10,14 @@
       var hash = window.location.hash.substring(1);
       var params = new URLSearchParams(hash);
       var token = params.get('access_token');
+      var expiresIn = Number(params.get('expires_in'));
       if (token) {
         localStorage.setItem('wca_access_token', token);
+        if (Number.isFinite(expiresIn) && expiresIn > 0) {
+          localStorage.setItem('wca_access_token_expires_at', String(Date.now() + expiresIn * 1000));
+        } else {
+          localStorage.removeItem('wca_access_token_expires_at');
+        }
       }
       window.close();
     })();

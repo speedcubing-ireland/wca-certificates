@@ -223,7 +223,12 @@
                     Preview
                   </button>
                   @if (printService.background && printService.backgroundForPreviewOnly) {
-                    <label for="backgroundForPreview">Background applied to preview only</label>
+                    <span>Background applied to preview only</span>
+                  }
+                  @if (shouldShowBlankCertificatesNotice()) {
+                    <div class="blank-certs-notice">
+                      Events marked "Not available yet" will generate blank certs
+                    </div>
                   }
                 </div>
               }

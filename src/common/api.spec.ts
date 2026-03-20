@@ -23,7 +23,7 @@ describe('ApiService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         ApiService,
-        {provide: AuthService, useValue: {accessToken: mockAccessToken}}
+        {provide: AuthService, useValue: {getValidAccessToken: () => mockAccessToken()}}
       ]
     });
 

@@ -65,7 +65,7 @@ describe('TemplateExtensionService', () => {
   let service: TemplateExtensionService;
   let httpMock: HttpTestingController;
   let mockPrintService: Partial<PrintService>;
-  let mockAuthService: {accessToken: jasmine.Spy};
+  let mockAuthService: {getValidAccessToken: jasmine.Spy};
 
   beforeEach(() => {
     localStorage.clear();
@@ -83,7 +83,7 @@ describe('TemplateExtensionService', () => {
     };
 
     mockAuthService = {
-      accessToken: jasmine.createSpy('accessToken').and.returnValue('fake-token')
+      getValidAccessToken: jasmine.createSpy('getValidAccessToken').and.returnValue('fake-token')
     };
 
     TestBed.configureTestingModule({
@@ -375,7 +375,7 @@ describe('TemplateExtensionService', () => {
     });
 
     it('should throw when not authenticated', () => {
-      mockAuthService.accessToken.and.returnValue(null);
+      mockAuthService.getValidAccessToken.and.returnValue(null);
       const wcif = makeWcif();
 
       expect(() => service.saveTemplate('TestComp2024', wcif)).toThrowError('Not authenticated');

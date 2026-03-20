@@ -1,14 +1,15 @@
 import './polyfills';
 
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 import { AppComponent } from './app/app.component';
+import { authErrorInterceptor } from './common/auth-error.interceptor';
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authErrorInterceptor])),
     provideAnimationsAsync()
   ]
 }).then(ref => {

@@ -2,6 +2,7 @@ import {TestBed} from '@angular/core/testing';
 import {AuthService} from './auth';
 
 const TOKEN_KEY = 'wca_access_token';
+const TOKEN_EXPIRES_AT_KEY = 'wca_access_token_expires_at';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -35,18 +36,59 @@ describe('AuthService', () => {
       expect(service.isLoggedIn()).toBeTrue();
       expect(service.accessToken()).toBe('existing-token');
     });
+
+    it('should clear expired token from localStorage at construction', () => {
+      service.ngOnDestroy();
+      localStorage.setItem(TOKEN_KEY, 'expired-token');
+      localStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(Date.now() - 1000));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      service = TestBed.inject(AuthService);
+
+      expect(service.isLoggedIn()).toBeFalse();
+      expect(service.accessToken()).toBeNull();
+      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+      expect(localStorage.getItem(TOKEN_EXPIRES_AT_KEY)).toBeNull();
+    });
   });
 
   describe('logout', () => {
-    it('should clear token from localStorage and signals', () => {
+    it('should clear token and expiry from localStorage and signals', () => {
       localStorage.setItem(TOKEN_KEY, 'test-token');
+      localStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(Date.now() + 60_000));
       service.accessToken.set('test-token');
+      service.tokenExpiresAt.set(Date.now() + 60_000);
 
       service.logout();
 
       expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+      expect(localStorage.getItem(TOKEN_EXPIRES_AT_KEY)).toBeNull();
       expect(service.accessToken()).toBeNull();
       expect(service.isLoggedIn()).toBeFalse();
+    });
+  });
+
+  describe('getValidAccessToken', () => {
+    it('should return token when not expired', () => {
+      localStorage.setItem(TOKEN_KEY, 'valid-token');
+      localStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(Date.now() + 60_000));
+      service.accessToken.set('valid-token');
+      service.tokenExpiresAt.set(Date.now() + 60_000);
+
+      expect(service.getValidAccessToken()).toBe('valid-token');
+    });
+
+    it('should clear and return null when expired', () => {
+      localStorage.setItem(TOKEN_KEY, 'expired-token');
+      localStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(Date.now() - 1000));
+      service.accessToken.set('expired-token');
+      service.tokenExpiresAt.set(Date.now() - 1000);
+
+      expect(service.getValidAccessToken()).toBeNull();
+      expect(service.isLoggedIn()).toBeFalse();
+      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+      expect(localStorage.getItem(TOKEN_EXPIRES_AT_KEY)).toBeNull();
     });
   });
 

@@ -10,6 +10,7 @@ Originally forked from https://github.com/Goosly/wca-certificates
 
 ### Podium Certificates
 - Generate certificates for 1st, 2nd, and 3rd place winners
+- Automatically generate blank certificates for selected events without final-round results
 - Select specific events or generate for all events
 - Filter results by country (ISO 2-letter codes)
 - Handles ties in podium placement

@@ -90,6 +90,8 @@ describe('AppComponent', () => {
       defaultPodiumCertificateStyleJson: '{}',
       resetPodiumCertificateJson: () => { /* noop */ },
       resetPodiumCertificateStyleJson: () => { /* noop */ },
+      printCertificatesAsPdf: jasmine.createSpy('printCertificatesAsPdf'),
+      printCertificatesAsPreview: jasmine.createSpy('printCertificatesAsPreview'),
     };
 
     TestBed.configureTestingModule({
@@ -265,6 +267,45 @@ describe('AppComponent', () => {
 
       expect(wcif.events[0].rounds[0].results.length).toBe(1);
       expect(wcif.events[0].rounds[0].results[0].best).toBe(500);
+    });
+  });
+
+  describe('printing actions', () => {
+    beforeEach(() => {
+      const event = makeEvent('333', [makeRound([])]);
+      event['printCertificate'] = true;
+      component.events = [event];
+      component.wcif = makeWcif([event], [makePerson('Alice', 1)]);
+    });
+
+    it('should print certificates for selected events', () => {
+      component.printCertificatesAsPdf();
+
+      expect(mockPrintService.printCertificatesAsPdf).toHaveBeenCalled();
+    });
+
+    it('should preview certificates for selected events', () => {
+      component.printCertificatesAsPreview();
+
+      expect(mockPrintService.printCertificatesAsPreview).toHaveBeenCalled();
+    });
+  });
+
+  describe('shouldShowBlankCertificatesNotice', () => {
+    it('should return true when a selected event has no final-round results', () => {
+      const noResultsEvent = makeEvent('333', [makeRound([])]);
+      noResultsEvent['printCertificate'] = true;
+      component.events = [noResultsEvent];
+
+      expect(component.shouldShowBlankCertificatesNotice()).toBeTrue();
+    });
+
+    it('should return false when selected event has final-round results', () => {
+      const withResultsEvent = makeEvent('333', [makeRound([makeResult(1, 800)])]);
+      withResultsEvent['printCertificate'] = true;
+      component.events = [withResultsEvent];
+
+      expect(component.shouldShowBlankCertificatesNotice()).toBeFalse();
     });
   });
 

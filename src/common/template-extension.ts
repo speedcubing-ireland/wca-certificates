@@ -78,7 +78,7 @@ export class TemplateExtensionService {
   }
 
   saveTemplate(competitionId: string, wcif: WCIF): Observable<boolean> {
-    const token = this.authService.accessToken();
+    const token = this.authService.getValidAccessToken();
     if (!token) {
       throw new Error('Not authenticated');
     }

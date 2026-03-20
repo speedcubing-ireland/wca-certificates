@@ -3,6 +3,7 @@ import {PrintService, DEFAULT_CERTIFICATE_JSON} from './print';
 import {Certificate} from './certificate';
 import {WCIF} from './types';
 import {Person} from '@wca/helpers';
+import {Event} from '@wca/helpers/lib/models/event';
 import {Result} from '@wca/helpers/lib/models/result';
 
 // Mock the global pdfMake before PrintService constructor runs
@@ -43,6 +44,13 @@ function makeWcif(persons: Person[] = []): WCIF {
     competitorLimit: null,
     extensions: []
   };
+}
+
+function makeEvent(id: string): Event {
+  return {
+    id,
+    rounds: [{id: `${id}-f`, format: 'a', results: []}]
+  } as unknown as Event;
 }
 
 describe('PrintService', () => {
@@ -341,6 +349,58 @@ describe('PrintService', () => {
       service.podiumCertificateJson = '[]';
       service.resetPodiumCertificateJson();
       expect(service.podiumCertificateJson).toBe(DEFAULT_CERTIFICATE_JSON);
+    });
+  });
+
+  describe('getCertificates', () => {
+    function getCertificates(events: string[], wcif: WCIF): Certificate[] {
+      return service['getCertificates'](events, wcif);
+    }
+
+    it('should generate blank certificates when final round has no results', () => {
+      const wcif = makeWcif([
+        makePerson('Delegate One', 1, ['delegate']),
+        makePerson('Organizer One', 2, ['organizer'])
+      ]);
+      wcif.events = [makeEvent('333')];
+
+      const certificates = getCertificates(['333'], wcif);
+
+      expect(certificates.length).toBe(3);
+    });
+
+    it('should include placeholder space for name and result', () => {
+      const wcif = makeWcif([
+        makePerson('Delegate One', 1, ['delegate']),
+        makePerson('Organizer One', 2, ['organizer'])
+      ]);
+      wcif.events = [makeEvent('333')];
+
+      const certificates = getCertificates(['333'], wcif);
+      const cert = certificates[0];
+
+      expect(cert.place).toBe('third');
+      expect(cert.name).toMatch(/^\s+$/);
+      expect(cert.name.length).toBeGreaterThan(1);
+      expect(cert.result).toMatch(/^\s+$/);
+      expect(cert.result.length).toBeGreaterThan(1);
+      expect(cert.resultType).toBe('a result');
+    });
+
+    it('should not generate blank certificates when final round has results', () => {
+      spyOn(window, 'alert');
+      const wcif = makeWcif([
+        makePerson('Delegate One', 1, ['delegate']),
+        makePerson('Organizer One', 2, ['organizer'])
+      ]);
+      const event = makeEvent('333');
+      event.rounds[0].results = [makeResult({personId: 1, ranking: 1, best: 800})];
+      wcif.events = [event];
+
+      const certificates = getCertificates(['333'], wcif);
+
+      expect(certificates.length).toBe(0);
+      expect(window.alert).toHaveBeenCalled();
     });
   });
 });

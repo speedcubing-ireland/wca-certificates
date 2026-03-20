@@ -389,6 +389,18 @@ export class AppComponent {
     return this.events.filter(e => e['printCertificate']).length === 0;
   }
 
+  shouldShowBlankCertificatesNotice(): boolean {
+    return this.events.some(event =>
+      event['printCertificate'] && !this.hasFinalRoundResults(event)
+    );
+  }
+
+  private hasFinalRoundResults(event: Event): boolean {
+    if (!event?.rounds?.length) return false;
+    const finalRound = event.rounds[event.rounds.length - 1];
+    return !!finalRound?.results?.length;
+  }
+
   toggleEventSelection(wcaEvent: Event & { printCertificate?: boolean }, _clickEvent: globalThis.Event): void {
     // Toggle the checkbox state
     wcaEvent.printCertificate = !wcaEvent.printCertificate;

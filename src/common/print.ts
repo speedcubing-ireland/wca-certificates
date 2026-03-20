@@ -25,6 +25,9 @@ export const DEFAULT_CERTIFICATE_JSON = `[
 "  certificate.resultUnit"
 ]`;
 
+const BLANK_NAME_PLACEHOLDER = '                            ';
+const BLANK_RESULT_PLACEHOLDER = '            ';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -97,6 +100,21 @@ export class PrintService {
     certificate.event = this.getEventName(eventId);
     certificate.resultType = this.getResultType(format, result);
     certificate.result = this.formatResultForEvent(result, eventId);
+    certificate.resultUnit = this.getResultUnit(eventId);
+    certificate.locationAndDate = '';
+    return certificate;
+  }
+
+  private getNewBlankCertificate(wcif: WCIF, eventId: string, place: number): Certificate {
+    const certificate: Certificate = new Certificate();
+    certificate.delegate = this.getPersonsWithRole(wcif, 'delegate');
+    certificate.organizers = this.getPersonsWithRole(wcif, 'organizer');
+    certificate.competitionName = wcif.name;
+    certificate.name = BLANK_NAME_PLACEHOLDER;
+    certificate.place = this.getPlace(place);
+    certificate.event = this.getEventName(eventId);
+    certificate.resultType = 'a result';
+    certificate.result = BLANK_RESULT_PLACEHOLDER;
     certificate.resultUnit = this.getResultUnit(eventId);
     certificate.locationAndDate = '';
     return certificate;
@@ -225,7 +243,10 @@ export class PrintService {
     const certificates: Certificate[] = [];
     for (const eventId of revEvents) {
       const event: Event = wcif.events.filter(e => e.id === eventId)[0];
-      if (!event?.rounds?.length) continue;
+      if (!this.hasFinalRoundResults(event)) {
+        certificates.push(...this.getBlankCertificatesForEvent(wcif, eventId));
+        continue;
+      }
       const podiumPlaces = event['podiumPlaces'];
       if (!podiumPlaces?.length) continue;
       const format = event.rounds[event.rounds.length - 1].format;
@@ -235,9 +256,23 @@ export class PrintService {
       }
     }
     if (certificates.length === 0) {
-      alert('No results available. Please select at least one event that already has results in the final.');
+      alert('No certificates could be generated from the selected events.');
     }
     return certificates;
+  }
+
+  private getBlankCertificatesForEvent(wcif: WCIF, eventId: string): Certificate[] {
+    const certificates: Certificate[] = [];
+    for (const podiumPlace of [3, 2, 1]) {
+      certificates.push(this.getNewBlankCertificate(wcif, eventId, podiumPlace));
+    }
+    return certificates;
+  }
+
+  private hasFinalRoundResults(event: Event | undefined): boolean {
+    if (!event?.rounds?.length) return false;
+    const finalRound = event.rounds[event.rounds.length - 1];
+    return !!finalRound?.results?.length;
   }
 
   public handleBackgroundSelected(files: FileList) {

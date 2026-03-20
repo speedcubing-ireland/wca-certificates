@@ -84,7 +84,7 @@ export class ApiService {
   }
 
   getWcif(competitionId: string): Observable<WCIF> {
-    const token = this.authService.accessToken();
+    const token = this.authService.getValidAccessToken();
     if (!token) {
       throw new Error('Not authenticated');
     }
