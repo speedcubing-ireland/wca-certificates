@@ -1,4 +1,4 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {CertificateEditorComponent} from './certificate-editor.component';
 import {PrintService} from '../../common/print';
 
@@ -234,21 +234,25 @@ describe('CertificateEditorComponent', () => {
       expect(mockPrint.generatePreviewBuffer).toHaveBeenCalled();
     });
 
-    it('should regenerate PDF when templateJson changes', () => {
+    it('should regenerate PDF when templateJson changes', fakeAsync(() => {
       spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
       component.ngOnChanges({
         templateJson: {currentValue: '["new"]', previousValue: '["old"]', firstChange: false, isFirstChange: () => false}
       });
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
+      tick(400);
       expect(mockPrint.generatePreviewBuffer).toHaveBeenCalled();
-    });
+    }));
 
-    it('should regenerate PDF when styleJson changes', () => {
+    it('should regenerate PDF when styleJson changes', fakeAsync(() => {
       spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
       component.ngOnChanges({
         styleJson: {currentValue: '{"font":"mono"}', previousValue: '{}', firstChange: false, isFirstChange: () => false}
       });
+      expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
+      tick(400);
       expect(mockPrint.generatePreviewBuffer).toHaveBeenCalled();
-    });
+    }));
 
     it('should NOT regenerate on first change (handled by ngAfterViewInit)', () => {
       spyOn(mockPrint, 'generatePreviewBuffer').and.callThrough();
