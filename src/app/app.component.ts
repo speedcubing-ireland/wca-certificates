@@ -13,6 +13,11 @@ import {Helpers} from '../common/helpers';
 import { environment } from '../environments/environment';
 import { Competition, WCIF, WcaApiResult } from '../common/types';
 import { CertificateEditorComponent } from './certificate-editor/certificate-editor.component';
+import {
+  UNOFFICIAL_FASTEST_NEWCOMER_333_R1,
+  computeFastestNewcomer333R1Podium,
+  unofficialPodiumWarning
+} from '../common/unofficial-certificates';
 
 /** Parse competition and tab from URL search params */
 export function parseUrlParams(search: string): { competitionId: string | null; tab: string | null } {
@@ -65,6 +70,14 @@ export class AppComponent {
   reloadingTemplate = false;
   templateMessage: { text: string; type: 'success' | 'info' | 'error' } | null = null;
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  /** Unofficial certificate rows (checkbox + status); ids are internal, not WCA event ids */
+  readonly unofficialCertificateRows: { id: string; label: string }[] = [
+    { id: UNOFFICIAL_FASTEST_NEWCOMER_333_R1, label: 'Fastest Newcomer (First Round)' },
+  ];
+  unofficialCertificatePrint: Record<string, boolean> = {
+    [UNOFFICIAL_FASTEST_NEWCOMER_333_R1]: false,
+  };
 
   // URL bookmarking support
   selectedTabIndex = 0;
@@ -315,15 +328,34 @@ export class AppComponent {
   }
 
   printCertificatesAsPdf() {
-    this.printService.printCertificatesAsPdf(this.wcif, this.getSelectedEvents());
+    this.printService.printCertificatesAsPdf(this.wcif, this.getSelectedCertificateIds());
   }
 
   printCertificatesAsPreview() {
-    this.printService.printCertificatesAsPreview(this.wcif, this.getSelectedEvents());
+    this.printService.printCertificatesAsPreview(this.wcif, this.getSelectedCertificateIds());
   }
 
-  private getSelectedEvents() {
-    return Array.from(this.events.filter(e => e['printCertificate']).map(e => e.id));
+  private getSelectedCertificateIds(): string[] {
+    const eventIds = this.events.filter(e => e['printCertificate']).map(e => e.id);
+    const unofficialIds = this.unofficialCertificateRows
+      .filter(row => this.unofficialCertificatePrint[row.id])
+      .map(row => row.id);
+    return [...eventIds, ...unofficialIds];
+  }
+
+  getUnofficialWarning(unofficialId: string): string {
+    if (!this.wcif) {
+      return 'Not available yet';
+    }
+    if (unofficialId === UNOFFICIAL_FASTEST_NEWCOMER_333_R1) {
+      const podium = computeFastestNewcomer333R1Podium(this.wcif, this.printService.countries);
+      return unofficialPodiumWarning(podium.length);
+    }
+    return 'Not available yet';
+  }
+
+  toggleUnofficialCertificate(rowId: string, _clickEvent: globalThis.Event): void {
+    this.unofficialCertificatePrint[rowId] = !this.unofficialCertificatePrint[rowId];
   }
 
   getWarningIfAny(eventId: string): string {
@@ -386,13 +418,37 @@ export class AppComponent {
   }
 
   printDisabled(): boolean {
-    return this.events.filter(e => e['printCertificate']).length === 0;
+    const anyOfficial = this.events.some(e => e['printCertificate']);
+    const anyUnofficial = this.unofficialCertificateRows.some(
+      row => this.unofficialCertificatePrint[row.id]
+    );
+    return !anyOfficial && !anyUnofficial;
   }
 
   shouldShowBlankCertificatesNotice(): boolean {
-    return this.events.some(event =>
+    if (this.events.some(event =>
       event['printCertificate'] && !this.hasFinalRoundResults(event)
-    );
+    )) {
+      return true;
+    }
+    if (!this.wcif) {
+      return false;
+    }
+    return this.unofficialCertificateRows.some(row => {
+      if (!this.unofficialCertificatePrint[row.id]) {
+        return false;
+      }
+      if (row.id !== UNOFFICIAL_FASTEST_NEWCOMER_333_R1) {
+        return false;
+      }
+      const event333 = this.wcif.events.find(e => e.id === '333');
+      const firstRound = event333?.rounds?.[0];
+      if (!firstRound?.results?.length) {
+        return true;
+      }
+      const podium = computeFastestNewcomer333R1Podium(this.wcif, this.printService.countries);
+      return podium.length === 0;
+    });
   }
 
   private hasFinalRoundResults(event: Event): boolean {
@@ -450,6 +506,7 @@ export class AppComponent {
     this.error = '';
     this.loading = false;
     this.selectedTabIndex = 0;
+    this.unofficialCertificatePrint = {[UNOFFICIAL_FASTEST_NEWCOMER_333_R1]: false};
     this.clearUrlParams();
   }
 

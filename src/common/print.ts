@@ -9,6 +9,12 @@ import {decodeMultiResult, formatMultiResult, isDnf} from '@wca/helpers/lib/help
 import {getEventName, EventId} from '@wca/helpers';
 import {WCIF, PdfDocument, PdfMakeStatic, PdfContentItem} from './types';
 import {environment} from '../environments/environment';
+import {
+  CERT_EVENT_FASTEST_NEWCOMER_333,
+  UNOFFICIAL_FASTEST_NEWCOMER_333_R1,
+  computeFastestNewcomer333R1Podium,
+  isUnofficialCertificateId
+} from './unofficial-certificates';
 
 declare const pdfMake: PdfMakeStatic;
 
@@ -90,14 +96,14 @@ export class PrintService {
     return getEventName(eventId as EventId).replace(' Cube', '');
   }
 
-  private getNewCertificate(wcif: WCIF, eventId: string, format: string, result: Result): Certificate {
+  private getNewCertificate(wcif: WCIF, eventId: string, format: string, result: Result, eventDisplayName?: string): Certificate {
     const certificate: Certificate = new Certificate();
     certificate.delegate = this.getPersonsWithRole(wcif, 'delegate');
     certificate.organizers = this.getPersonsWithRole(wcif, 'organizer');
     certificate.competitionName = wcif.name;
     certificate.name = wcif.persons.filter(p => p.registrantId === result.personId)[0].name;
     certificate.place = this.getPlace(result['rankingAfterFiltering']);
-    certificate.event = this.getEventName(eventId);
+    certificate.event = eventDisplayName ?? this.getEventName(eventId);
     certificate.resultType = this.getResultType(format, result);
     certificate.result = this.formatResultForEvent(result, eventId);
     certificate.resultUnit = this.getResultUnit(eventId);
@@ -105,14 +111,14 @@ export class PrintService {
     return certificate;
   }
 
-  private getNewBlankCertificate(wcif: WCIF, eventId: string, place: number): Certificate {
+  private getNewBlankCertificate(wcif: WCIF, eventId: string, place: number, eventDisplayName?: string): Certificate {
     const certificate: Certificate = new Certificate();
     certificate.delegate = this.getPersonsWithRole(wcif, 'delegate');
     certificate.organizers = this.getPersonsWithRole(wcif, 'organizer');
     certificate.competitionName = wcif.name;
     certificate.name = BLANK_NAME_PLACEHOLDER;
     certificate.place = this.getPlace(place);
-    certificate.event = this.getEventName(eventId);
+    certificate.event = eventDisplayName ?? this.getEventName(eventId);
     certificate.resultType = 'a result';
     certificate.result = BLANK_RESULT_PLACEHOLDER;
     certificate.resultUnit = this.getResultUnit(eventId);
@@ -242,6 +248,10 @@ export class PrintService {
     const revEvents = [...events].reverse();
     const certificates: Certificate[] = [];
     for (const eventId of revEvents) {
+      if (isUnofficialCertificateId(eventId)) {
+        certificates.push(...this.getUnofficialCertificates(eventId, wcif));
+        continue;
+      }
       const event: Event = wcif.events.filter(e => e.id === eventId)[0];
       if (!this.hasFinalRoundResults(event)) {
         certificates.push(...this.getBlankCertificatesForEvent(wcif, eventId));
@@ -265,6 +275,35 @@ export class PrintService {
     const certificates: Certificate[] = [];
     for (const podiumPlace of [3, 2, 1]) {
       certificates.push(this.getNewBlankCertificate(wcif, eventId, podiumPlace));
+    }
+    return certificates;
+  }
+
+  private getUnofficialCertificates(unofficialId: string, wcif: WCIF): Certificate[] {
+    if (unofficialId === UNOFFICIAL_FASTEST_NEWCOMER_333_R1) {
+      return this.getFastestNewcomer333R1Certificates(wcif);
+    }
+    return [];
+  }
+
+  private getFastestNewcomer333R1Certificates(wcif: WCIF): Certificate[] {
+    const event333 = wcif.events.find(e => e.id === '333');
+    const firstRound = event333?.rounds?.[0];
+    if (!firstRound?.results?.length) {
+      return this.getBlankCertificatesForUnofficial(wcif, '333', CERT_EVENT_FASTEST_NEWCOMER_333);
+    }
+    const podiumPlaces = computeFastestNewcomer333R1Podium(wcif, this.countries);
+    if (!podiumPlaces.length) {
+      return this.getBlankCertificatesForUnofficial(wcif, '333', CERT_EVENT_FASTEST_NEWCOMER_333);
+    }
+    const format = firstRound.format;
+    return podiumPlaces.map(p => this.getNewCertificate(wcif, '333', format, p, CERT_EVENT_FASTEST_NEWCOMER_333));
+  }
+
+  private getBlankCertificatesForUnofficial(wcif: WCIF, eventIdForFormat: string, eventDisplayName: string): Certificate[] {
+    const certificates: Certificate[] = [];
+    for (const podiumPlace of [3, 2, 1]) {
+      certificates.push(this.getNewBlankCertificate(wcif, eventIdForFormat, podiumPlace, eventDisplayName));
     }
     return certificates;
   }

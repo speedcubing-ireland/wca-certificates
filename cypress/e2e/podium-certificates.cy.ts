@@ -29,9 +29,14 @@ describe('Podium Certificates Tab', () => {
 
   it('should display the events table', () => {
     cy.get('.events-table').should('be.visible');
-    cy.get('.events-table thead').should('contain', 'Print');
-    cy.get('.events-table thead').should('contain', 'Event');
-    cy.get('.events-table thead').should('contain', 'Status');
+    cy.get('.events-table thead').first().should('contain', 'Print');
+    cy.get('.events-table thead').first().should('contain', 'Event');
+    cy.get('.events-table thead').first().should('contain', 'Status');
+  });
+
+  it('should show unofficial awards section', () => {
+    cy.contains('h3', 'Unofficial awards').should('be.visible');
+    cy.contains('Fastest Newcomer (First Round)').should('be.visible');
   });
 
   it('should display events with checkboxes', () => {

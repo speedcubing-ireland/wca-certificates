@@ -2,6 +2,7 @@ import {TestBed} from '@angular/core/testing';
 import {PrintService, DEFAULT_CERTIFICATE_JSON} from './print';
 import {Certificate} from './certificate';
 import {WCIF} from './types';
+import {CERT_EVENT_FASTEST_NEWCOMER_333, UNOFFICIAL_FASTEST_NEWCOMER_333_R1} from './unofficial-certificates';
 import {Person} from '@wca/helpers';
 import {Event} from '@wca/helpers/lib/models/event';
 import {Result} from '@wca/helpers/lib/models/result';
@@ -401,6 +402,25 @@ describe('PrintService', () => {
 
       expect(certificates.length).toBe(0);
       expect(window.alert).toHaveBeenCalled();
+    });
+
+    it('should generate fastest newcomer certs with certificate event title', () => {
+      const newcomer = {name: 'New Person', registrantId: 1, roles: [] as string[], wcaId: null} as Person;
+      const wcif = makeWcif([
+        makePerson('Delegate One', 2, ['delegate']),
+        makePerson('Organizer One', 3, ['organizer']),
+        newcomer
+      ]);
+      const event = makeEvent('333');
+      const r = makeResult({personId: 1, ranking: 1, best: 1100, average: 1200});
+      event.rounds[0].results = [r];
+      wcif.events = [event];
+
+      const certificates = getCertificates([UNOFFICIAL_FASTEST_NEWCOMER_333_R1], wcif);
+
+      expect(certificates.length).toBe(1);
+      expect(certificates[0].event).toBe(CERT_EVENT_FASTEST_NEWCOMER_333);
+      expect(certificates[0].name).toBe('New Person');
     });
   });
 });

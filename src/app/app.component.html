@@ -210,6 +210,33 @@
                   </tbody>
                 </table>
 
+                <h3 class="unofficial-section-title" style="margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; font-weight: 600;">Unofficial awards</h3>
+                <table class="events-table unofficial-events-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 60px;">Print</th>
+                      <th style="width: 45%;">Award</th>
+                      <th style="width: auto;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of unofficialCertificateRows; track row.id) {
+                      <tr class="event-row"
+                          (click)="toggleUnofficialCertificate(row.id, $event)"
+                          [class.selected]="unofficialCertificatePrint[row.id]">
+                        <td>
+                          <input type="checkbox"
+                                 class="event-checkbox"
+                                 [(ngModel)]="unofficialCertificatePrint[row.id]"
+                                 (click)="$event.stopPropagation()">
+                        </td>
+                        <td style="font-weight: 500;">{{ row.label }}</td>
+                        <td class="event-warning">{{ getUnofficialWarning(row.id) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+
                 <!-- Download Actions -->
                 <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; align-items: center;">
                   <button class="btn-primary"
