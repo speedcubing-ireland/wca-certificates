@@ -66,6 +66,24 @@
                data-cy="y-offset-slider">
         <span class="offset-value" data-cy="y-offset-value">{{ yOffset }}pt</span>
       </div>
+
+      <label class="json-edit-toggle">
+        <input type="checkbox"
+               [(ngModel)]="showLayoutJsonEditor"
+               class="event-checkbox"
+               data-cy="edit-layout-json">
+        <span>Edit certificate JSON</span>
+      </label>
+      @if (showLayoutJsonEditor) {
+        <textarea id="podium-layout-json"
+                  class="certificate-layout-json"
+                  [(ngModel)]="printService.podiumCertificateJson"
+                  placeholder="Certificate template JSON..."
+                  spellcheck="false"
+                  autocorrect="off"
+                  autocomplete="off"
+                  data-cy="certificate-layout-json"></textarea>
+      }
     </div>
   </div>
 </div>

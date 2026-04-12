@@ -120,3 +120,42 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.json-edit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.json-edit-toggle input[type="checkbox"] {
+  accent-color: var(--accent-primary, #00d4ff);
+  cursor: pointer;
+}
+
+textarea.certificate-layout-json {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 200px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  tab-size: 2;
+  resize: vertical;
+  background: var(--bg-secondary, #111827);
+  border: 1px solid var(--border-color, #374151);
+  border-radius: 4px;
+  color: var(--text-primary, #e5e7eb);
+}
+
+textarea.certificate-layout-json:focus {
+  outline: none;
+  border-color: var(--accent-primary, #00d4ff);
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}

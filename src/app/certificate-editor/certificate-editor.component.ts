@@ -52,6 +52,12 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
   private boundOnMouseMove = this.onMouseMove.bind(this);
   private boundOnMouseUp = this.onMouseUp.bind(this);
 
+  /** Toggle raw JSON editor below offset controls */
+  showLayoutJsonEditor = false;
+
+  private structuralDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly structuralDebounceMs = 400;
+
   constructor(
     public printService: PrintService,
     private ngZone: NgZone,
@@ -67,16 +73,41 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
   }
 
   ngOnDestroy(): void {
+    this.cancelStructuralDebounce();
     document.removeEventListener('mousemove', this.boundOnMouseMove);
     document.removeEventListener('mouseup', this.boundOnMouseUp);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Only regenerate the PDF when structural properties change (not offsets)
-    const structuralKeys = ['orientation', 'templateJson', 'styleJson'];
-    const hasStructural = structuralKeys.some(k => changes[k] && !changes[k].firstChange);
-    if (hasStructural) {
+    // Orientation: regenerate immediately (layout dimensions change)
+    if (changes['orientation'] && !changes['orientation'].firstChange) {
+      this.cancelStructuralDebounce();
       this.regeneratePdf();
+      return;
+    }
+
+    // Template/style: debounced so JSON textarea edits do not repaint every keystroke
+    const deferredKeys = ['templateJson', 'styleJson'] as const;
+    const hasDeferred = deferredKeys.some(k => changes[k] && !changes[k].firstChange);
+    if (hasDeferred) {
+      this.scheduleStructuralRegenerate();
+    }
+  }
+
+  private scheduleStructuralRegenerate(): void {
+    if (this.structuralDebounceTimer !== null) {
+      clearTimeout(this.structuralDebounceTimer);
+    }
+    this.structuralDebounceTimer = setTimeout(() => {
+      this.structuralDebounceTimer = null;
+      this.regeneratePdf();
+    }, this.structuralDebounceMs);
+  }
+
+  private cancelStructuralDebounce(): void {
+    if (this.structuralDebounceTimer !== null) {
+      clearTimeout(this.structuralDebounceTimer);
+      this.structuralDebounceTimer = null;
     }
   }
 
