@@ -280,4 +280,45 @@ describe('CertificateEditorComponent', () => {
       expect(mockPrint.generatePreviewBuffer).not.toHaveBeenCalled();
     });
   });
+
+  describe('JSON editor UX', () => {
+    beforeEach(() => {
+      component.showLayoutJsonEditor = true;
+      fixture.detectChanges();
+    });
+
+    it('should emit templateJsonChange for valid JSON', () => {
+      spyOn(component.templateJsonChange, 'emit');
+
+      component.onLayoutJsonInput('["updated"]');
+
+      expect(component.layoutJsonError).toBeNull();
+      expect(component.templateJsonChange.emit).toHaveBeenCalledWith('["updated"]');
+    });
+
+    it('should keep invalid JSON local and show a validation error', () => {
+      spyOn(component.templateJsonChange, 'emit');
+
+      component.onLayoutJsonInput('{"broken":');
+      fixture.detectChanges();
+
+      expect(component.templateJsonChange.emit).not.toHaveBeenCalled();
+      expect(component.layoutJsonError).toContain('Preview stays on the last valid template.');
+      const errorEl: HTMLElement = fixture.nativeElement.querySelector('[data-cy="certificate-layout-json-error"]');
+      expect(errorEl.textContent).toContain('Preview stays on the last valid template.');
+    });
+
+    it('should sync the local draft when the parent template changes', () => {
+      component.layoutJsonDraft = '["local"]';
+      component.layoutJsonError = 'Invalid JSON';
+
+      component.templateJson = '["server"]';
+      component.ngOnChanges({
+        templateJson: {currentValue: '["server"]', previousValue: '["old"]', firstChange: false, isFirstChange: () => false}
+      });
+
+      expect(component.layoutJsonDraft).toBe('["server"]');
+      expect(component.layoutJsonError).toBeNull();
+    });
+  });
 });

@@ -8,6 +8,7 @@ import {WCIF, WcaApiResult, Competition} from '../common/types';
 import {Result} from '@wca/helpers/lib/models/result';
 import {Event} from '@wca/helpers/lib/models/event';
 import {Person} from '@wca/helpers';
+import {podiumByRanking} from '../common/podium';
 
 // Mock pdfMake global
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -309,11 +310,7 @@ describe('AppComponent', () => {
     });
   });
 
-  describe('getPodiumPlaces', () => {
-    function getPodiumPlaces(results: Result[]): Result[] {
-      return component['getPodiumPlaces'](results);
-    }
-
+  describe('podiumByRanking', () => {
     it('should return top 3 results in reverse order (3rd, 2nd, 1st)', () => {
       const results = [
         makeResult(1, 800, 900),
@@ -321,7 +318,7 @@ describe('AppComponent', () => {
         makeResult(3, 1000, 1100)
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(3);
       expect(podium[0].ranking).toBe(3);
@@ -337,7 +334,7 @@ describe('AppComponent', () => {
         makeResult(3, 1000), // Tied for 3rd
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(4);
     });
@@ -351,7 +348,7 @@ describe('AppComponent', () => {
         makeResult(3, 1000), // Three-way tie for 3rd
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(5);
     });
@@ -365,7 +362,7 @@ describe('AppComponent', () => {
         makeResult(5, 1200), // Not tied with 3rd
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(4);
     });
@@ -376,19 +373,19 @@ describe('AppComponent', () => {
         makeResult(2, 900)
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(2);
     });
 
     it('should handle single result', () => {
       const results = [makeResult(1, 800)];
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
       expect(podium.length).toBe(1);
     });
 
     it('should handle empty results', () => {
-      const podium = getPodiumPlaces([]);
+      const podium = podiumByRanking([]);
       expect(podium.length).toBe(0);
     });
 
@@ -400,7 +397,7 @@ describe('AppComponent', () => {
         makeResult(2, 900)
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(3);
       // Reversed: 3rd, 2nd, 1st
@@ -416,7 +413,7 @@ describe('AppComponent', () => {
         makeResult(3, 1000)
       ];
 
-      const podium = getPodiumPlaces(results);
+      const podium = podiumByRanking(results);
 
       expect(podium.length).toBe(3);
     });
@@ -516,37 +513,29 @@ describe('AppComponent', () => {
     });
   });
 
-  describe('calculateRankingAfterFiltering', () => {
-    function calculateRanking(podiumPlaces: Result[]): void {
-      component['calculateRankingAfterFiltering'](podiumPlaces);
-    }
-
+  describe('podium ranking metadata', () => {
     it('should assign sequential rankings', () => {
-      const results = [
+      const podium = podiumByRanking([
         makeResult(1, 800),
         makeResult(2, 900),
         makeResult(3, 1000)
-      ];
+      ]);
 
-      calculateRanking(results);
-
-      expect(results[0]['rankingAfterFiltering']).toBe(1);
-      expect(results[1]['rankingAfterFiltering']).toBe(2);
-      expect(results[2]['rankingAfterFiltering']).toBe(3);
+      expect(podium[0]['rankingAfterFiltering']).toBe(3);
+      expect(podium[1]['rankingAfterFiltering']).toBe(2);
+      expect(podium[2]['rankingAfterFiltering']).toBe(1);
     });
 
     it('should handle tied rankings', () => {
-      const results = [
+      const podium = podiumByRanking([
         makeResult(1, 800),
         makeResult(1, 800),
         makeResult(3, 1000)
-      ];
+      ]);
 
-      calculateRanking(results);
-
-      expect(results[0]['rankingAfterFiltering']).toBe(1);
-      expect(results[1]['rankingAfterFiltering']).toBe(1);
-      expect(results[2]['rankingAfterFiltering']).toBe(3);
+      expect(podium[0]['rankingAfterFiltering']).toBe(3);
+      expect(podium[1]['rankingAfterFiltering']).toBe(1);
+      expect(podium[2]['rankingAfterFiltering']).toBe(1);
     });
   });
 

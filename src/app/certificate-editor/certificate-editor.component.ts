@@ -1,6 +1,6 @@
 import {
   Component, OnInit, OnDestroy, OnChanges, SimpleChanges,
-  Input, Output, EventEmitter, NgZone, ViewChild, ElementRef, AfterViewInit
+  Input, Output, EventEmitter, NgZone, ViewChild, ElementRef, AfterViewInit, inject
 } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -29,6 +29,7 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
   @Input() styleJson = '';
   @Input() xOffset = 0;
   @Input() yOffset = 0;
+  @Output() templateJsonChange = new EventEmitter<string>();
   @Output() xOffsetChange = new EventEmitter<number>();
   @Output() yOffsetChange = new EventEmitter<number>();
 
@@ -38,6 +39,7 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
   loading = true;
   /** Whether we have rendered at least once */
   hasRendered = false;
+  previewError: string | null = null;
 
   /** Drag state */
   dragging = false;
@@ -54,18 +56,17 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
 
   /** Toggle raw JSON editor below offset controls */
   showLayoutJsonEditor = false;
+  layoutJsonDraft = '';
+  layoutJsonError: string | null = null;
 
   private structuralDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly structuralDebounceMs = 400;
-
-  constructor(
-    public printService: PrintService,
-    private ngZone: NgZone,
-  ) {}
+  public printService = inject(PrintService);
+  private readonly ngZone = inject(NgZone);
 
   ngOnInit(): void {
-    // Disable PDF.js web worker (use main thread — our PDFs are tiny, one page)
     pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    this.layoutJsonDraft = this.templateJson;
   }
 
   ngAfterViewInit(): void {
@@ -79,14 +80,17 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Orientation: regenerate immediately (layout dimensions change)
+    if (changes['templateJson']) {
+      this.layoutJsonDraft = this.templateJson;
+      this.layoutJsonError = null;
+    }
+
     if (changes['orientation'] && !changes['orientation'].firstChange) {
       this.cancelStructuralDebounce();
       this.regeneratePdf();
       return;
     }
 
-    // Template/style: debounced so JSON textarea edits do not repaint every keystroke
     const deferredKeys = ['templateJson', 'styleJson'] as const;
     const hasDeferred = deferredKeys.some(k => changes[k] && !changes[k].firstChange);
     if (hasDeferred) {
@@ -158,6 +162,18 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
     this.yOffsetChange.emit(this.yOffset);
   }
 
+  onLayoutJsonInput(value: string): void {
+    this.layoutJsonDraft = value;
+    const error = this.validateJson(value);
+    if (error) {
+      this.layoutJsonError = `${error} Preview stays on the last valid template.`;
+      return;
+    }
+
+    this.layoutJsonError = null;
+    this.templateJsonChange.emit(value);
+  }
+
   // --- Drag support (offsets only — no PDF regeneration needed) ---
 
   onMouseDown(event: MouseEvent): void {
@@ -200,24 +216,24 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
 
   // --- PDF rendering to canvas via PDF.js ---
 
-  /**
-   * Regenerate the PDF buffer (text only, no background, offsets at 0,0)
-   * and render it to the canvas with a transparent background.
-   * Only called when template/style/orientation change — NOT on offset changes.
-   */
   regeneratePdf(): void {
     if (!this.canvasRef) return;
     this.loading = true;
+    this.previewError = null;
 
     this.ngZone.runOutsideAngular(() => {
-      this.printService.generatePreviewBuffer((buffer: ArrayBuffer) => {
-        this.renderBufferToCanvas(buffer).then(() => {
-          this.ngZone.run(() => {
-            this.loading = false;
-            this.hasRendered = true;
-          });
+      try {
+        this.printService.generatePreviewBuffer((buffer: ArrayBuffer) => {
+          this.renderBufferToCanvas(buffer).then(() => {
+            this.ngZone.run(() => {
+              this.loading = false;
+              this.hasRendered = true;
+            });
+          }).catch(error => this.handlePreviewError(error));
         });
-      });
+      } catch (error) {
+        this.handlePreviewError(error);
+      }
     });
   }
 
@@ -240,5 +256,27 @@ export class CertificateEditorComponent implements OnInit, OnDestroy, OnChanges,
       viewport,
       background: 'rgba(0,0,0,0)',
     }).promise;
+  }
+
+  private handlePreviewError(error: unknown): void {
+    console.error('Failed to regenerate certificate preview.', error);
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.previewError = 'Preview could not be rendered. Check the current template and style JSON.';
+    });
+  }
+
+  private validateJson(value: string): string | null {
+    try {
+      JSON.parse(value);
+      return null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid JSON.';
+      const lineColumnMatch = message.match(/line (\d+) column (\d+)/i);
+      if (lineColumnMatch) {
+        return `Invalid JSON at line ${lineColumnMatch[1]}, column ${lineColumnMatch[2]}.`;
+      }
+      return message;
+    }
   }
 }

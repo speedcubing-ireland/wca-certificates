@@ -9,15 +9,17 @@ import {TemplateExtensionService} from '../common/template-extension';
 import {Event} from '@wca/helpers/lib/models/event';
 import {Result} from '@wca/helpers/lib/models/result';
 import {Person} from '@wca/helpers';
-import {Helpers} from '../common/helpers';
 import { environment } from '../environments/environment';
 import { Competition, WCIF, WcaApiResult } from '../common/types';
 import { CertificateEditorComponent } from './certificate-editor/certificate-editor.component';
 import {
-  UNOFFICIAL_FASTEST_NEWCOMER_333_R1,
-  computeFastestNewcomer333R1Podium,
-  unofficialPodiumWarning
+  UNOFFICIAL_CERTIFICATE_DEFINITIONS,
+  createUnofficialCertificateSelection,
+  getPodiumWarning,
+  getUnofficialWarning as getUnofficialCertificateWarning,
+  shouldGenerateBlankUnofficialCertificates
 } from '../common/unofficial-certificates';
+import {podiumByRanking} from '../common/podium';
 
 /** Parse competition and tab from URL search params */
 export function parseUrlParams(search: string): { competitionId: string | null; tab: string | null } {
@@ -71,13 +73,8 @@ export class AppComponent {
   templateMessage: { text: string; type: 'success' | 'info' | 'error' } | null = null;
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  /** Unofficial certificate rows (checkbox + status); ids are internal, not WCA event ids */
-  readonly unofficialCertificateRows: { id: string; label: string }[] = [
-    { id: UNOFFICIAL_FASTEST_NEWCOMER_333_R1, label: 'Fastest Newcomer (First Round)' },
-  ];
-  unofficialCertificatePrint: Record<string, boolean> = {
-    [UNOFFICIAL_FASTEST_NEWCOMER_333_R1]: false,
-  };
+  readonly unofficialCertificateRows = UNOFFICIAL_CERTIFICATE_DEFINITIONS;
+  unofficialCertificatePrint = createUnofficialCertificateSelection();
 
   // URL bookmarking support
   selectedTabIndex = 0;
@@ -344,14 +341,7 @@ export class AppComponent {
   }
 
   getUnofficialWarning(unofficialId: string): string {
-    if (!this.wcif) {
-      return 'Not available yet';
-    }
-    if (unofficialId === UNOFFICIAL_FASTEST_NEWCOMER_333_R1) {
-      const podium = computeFastestNewcomer333R1Podium(this.wcif, this.printService.countries);
-      return unofficialPodiumWarning(podium.length);
-    }
-    return 'Not available yet';
+    return getUnofficialCertificateWarning(unofficialId, this.wcif, this.printService.countries);
   }
 
   toggleUnofficialCertificate(rowId: string, _clickEvent: globalThis.Event): void {
@@ -365,22 +355,10 @@ export class AppComponent {
     results = this.filterResultsWithOnlyDNF(results);
     results = this.filterResultsByCountry(results);
 
-    const podiumPlaces = this.getPodiumPlaces(results);
-    this.calculateRankingAfterFiltering(podiumPlaces);
+    const podiumPlaces = podiumByRanking(results);
     event['podiumPlaces'] = podiumPlaces;
 
-    switch (podiumPlaces.length) {
-      case 0:
-        return 'Not available yet';
-      case 1:
-        return 'Only 1 person on the podium!';
-      case 2:
-        return 'Only 2 persons on the podium!';
-      case 3:
-        return ''; // No warning
-      default:
-        return 'More than 3 persons on the podium!';
-    }
+    return getPodiumWarning(podiumPlaces.length, true);
   }
 
   private filterResultsWithOnlyDNF(results: Result[]): Result[] {
@@ -392,29 +370,6 @@ export class AppComponent {
       return results.filter(r => this.printService.countries.split(';').includes(r['countryIso2']));
     }
     return results;
-  }
-
-  private getPodiumPlaces(results: Result[]): Result[] {
-    Helpers.sortResultsByRanking(results);
-    const podiumPlaces = results.slice(0, 3);
-    if (podiumPlaces.length === 3) {
-      let i = 3;
-      while (i < results.length) {
-        if (podiumPlaces[i - 1].ranking === results[i].ranking) {
-          podiumPlaces.push(results[i]);
-        } else {
-          break;
-        }
-        i++;
-      }
-    }
-    return podiumPlaces.reverse();
-  }
-
-  private calculateRankingAfterFiltering(podiumPlaces: Result[]): void {
-    podiumPlaces.forEach(function(p) {
-      p['rankingAfterFiltering'] = podiumPlaces.filter(o => o.ranking < p.ranking).length + 1;
-    });
   }
 
   printDisabled(): boolean {
@@ -434,21 +389,10 @@ export class AppComponent {
     if (!this.wcif) {
       return false;
     }
-    return this.unofficialCertificateRows.some(row => {
-      if (!this.unofficialCertificatePrint[row.id]) {
-        return false;
-      }
-      if (row.id !== UNOFFICIAL_FASTEST_NEWCOMER_333_R1) {
-        return false;
-      }
-      const event333 = this.wcif.events.find(e => e.id === '333');
-      const firstRound = event333?.rounds?.[0];
-      if (!firstRound?.results?.length) {
-        return true;
-      }
-      const podium = computeFastestNewcomer333R1Podium(this.wcif, this.printService.countries);
-      return podium.length === 0;
-    });
+    return this.unofficialCertificateRows.some(row =>
+      this.unofficialCertificatePrint[row.id] &&
+      shouldGenerateBlankUnofficialCertificates(row.id, this.wcif, this.printService.countries)
+    );
   }
 
   private hasFinalRoundResults(event: Event): boolean {
@@ -506,7 +450,7 @@ export class AppComponent {
     this.error = '';
     this.loading = false;
     this.selectedTabIndex = 0;
-    this.unofficialCertificatePrint = {[UNOFFICIAL_FASTEST_NEWCOMER_333_R1]: false};
+    this.unofficialCertificatePrint = createUnofficialCertificateSelection();
     this.clearUrlParams();
   }
 

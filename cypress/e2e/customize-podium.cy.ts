@@ -60,6 +60,15 @@ describe('Customize Podium Tab', () => {
     cy.get('textarea#podium-style').should('not.have.value', '{"font":"mono"}');
   });
 
+  it('should keep the last valid template preview when layout JSON is invalid', () => {
+    cy.get('[data-cy="edit-layout-json"]').check();
+    cy.get('[data-cy="certificate-layout-json"]').clear().type('{"broken":', { parseSpecialCharSequences: false });
+    cy.get('[data-cy="certificate-layout-json-error"]')
+      .should('be.visible')
+      .and('contain.text', 'Preview stays on the last valid template');
+    cy.get('[data-cy="preview-error"]').should('not.exist');
+  });
+
   it('should have editable style configuration textarea', () => {
     cy.get('textarea').first().should('be.visible');
     cy.get('textarea').first().should('not.be.disabled');

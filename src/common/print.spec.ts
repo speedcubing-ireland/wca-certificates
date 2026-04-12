@@ -2,7 +2,7 @@ import {TestBed} from '@angular/core/testing';
 import {PrintService, DEFAULT_CERTIFICATE_JSON} from './print';
 import {Certificate} from './certificate';
 import {WCIF} from './types';
-import {CERT_EVENT_FASTEST_NEWCOMER_333, UNOFFICIAL_FASTEST_NEWCOMER_333_R1} from './unofficial-certificates';
+import {getUnofficialCertificateDefinition, UNOFFICIAL_FASTEST_NEWCOMER_333_R1} from './unofficial-certificates';
 import {Person} from '@wca/helpers';
 import {Event} from '@wca/helpers/lib/models/event';
 import {Result} from '@wca/helpers/lib/models/result';
@@ -235,6 +235,35 @@ describe('PrintService', () => {
     });
   });
 
+  describe('JSON fallbacks', () => {
+    it('should fall back to the default certificate template when the current JSON is invalid', () => {
+      service.podiumCertificateJson = '{"broken":';
+      const certificate = new Certificate();
+      certificate.delegate = 'Jane Delegate';
+      certificate.organizers = 'Org One and Org Two';
+      certificate.competitionName = 'Irish Open 2024';
+      certificate.name = 'Max Solver';
+      certificate.place = 'first';
+      certificate.event = '3x3x3';
+      certificate.resultType = 'an average';
+      certificate.result = '8.45';
+      certificate.resultUnit = '';
+      certificate.locationAndDate = 'Dublin, 2024';
+
+      const content = service['getOneCertificateContent'](certificate);
+
+      expect(content.text).toBeTruthy();
+    });
+
+    it('should ignore invalid style JSON instead of crashing document generation', () => {
+      service.podiumCertificateStyleJson = '{"font":';
+
+      const document = service['getDocument']('landscape', null, false);
+
+      expect(document.defaultStyle.fontSize).toBe(22);
+    });
+  });
+
   describe('replaceStringsIn', () => {
     function replaceStringsIn(template: string, certificate: Certificate): string {
       return service['replaceStringsIn'](template, certificate);
@@ -417,9 +446,10 @@ describe('PrintService', () => {
       wcif.events = [event];
 
       const certificates = getCertificates([UNOFFICIAL_FASTEST_NEWCOMER_333_R1], wcif);
+      const definition = getUnofficialCertificateDefinition(UNOFFICIAL_FASTEST_NEWCOMER_333_R1);
 
       expect(certificates.length).toBe(1);
-      expect(certificates[0].event).toBe(CERT_EVENT_FASTEST_NEWCOMER_333);
+      expect(certificates[0].event).toBe(definition?.certificateEventName);
       expect(certificates[0].name).toBe('New Person');
     });
   });

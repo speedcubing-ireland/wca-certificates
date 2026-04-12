@@ -10,9 +10,8 @@ import {getEventName, EventId} from '@wca/helpers';
 import {WCIF, PdfDocument, PdfMakeStatic, PdfContentItem} from './types';
 import {environment} from '../environments/environment';
 import {
-  CERT_EVENT_FASTEST_NEWCOMER_333,
-  UNOFFICIAL_FASTEST_NEWCOMER_333_R1,
-  computeFastestNewcomer333R1Podium,
+  getUnofficialCertificateDefinition,
+  getUnofficialPodium,
   isUnofficialCertificateId
 } from './unofficial-certificates';
 
@@ -181,7 +180,11 @@ export class PrintService {
 
   private getOneCertificateContent(certificate: Certificate): PdfContentItem {
     const jsonWithReplacedStrings = this.replaceStringsIn(this.podiumCertificateJson, certificate);
-    const textObject = JSON.parse(jsonWithReplacedStrings);
+    const textObject = this.parseJsonWithFallback(
+      jsonWithReplacedStrings,
+      this.replaceStringsIn(this.defaultPodiumCertificateJson, certificate),
+      'certificate template'
+    );
     return {
       text: textObject,
       alignment: 'center',
@@ -280,24 +283,30 @@ export class PrintService {
   }
 
   private getUnofficialCertificates(unofficialId: string, wcif: WCIF): Certificate[] {
-    if (unofficialId === UNOFFICIAL_FASTEST_NEWCOMER_333_R1) {
-      return this.getFastestNewcomer333R1Certificates(wcif);
+    const definition = getUnofficialCertificateDefinition(unofficialId);
+    if (!definition) {
+      return [];
     }
-    return [];
-  }
 
-  private getFastestNewcomer333R1Certificates(wcif: WCIF): Certificate[] {
-    const event333 = wcif.events.find(e => e.id === '333');
-    const firstRound = event333?.rounds?.[0];
-    if (!firstRound?.results?.length) {
-      return this.getBlankCertificatesForUnofficial(wcif, '333', CERT_EVENT_FASTEST_NEWCOMER_333);
+    const format = definition.getSourceFormat(wcif);
+    if (!format || !definition.hasSourceResults(wcif)) {
+      return this.getBlankCertificatesForUnofficial(wcif, definition.eventIdForFormat, definition.certificateEventName);
     }
-    const podiumPlaces = computeFastestNewcomer333R1Podium(wcif, this.countries);
+
+    const podiumPlaces = getUnofficialPodium(unofficialId, wcif, this.countries);
     if (!podiumPlaces.length) {
-      return this.getBlankCertificatesForUnofficial(wcif, '333', CERT_EVENT_FASTEST_NEWCOMER_333);
+      return this.getBlankCertificatesForUnofficial(wcif, definition.eventIdForFormat, definition.certificateEventName);
     }
-    const format = firstRound.format;
-    return podiumPlaces.map(p => this.getNewCertificate(wcif, '333', format, p, CERT_EVENT_FASTEST_NEWCOMER_333));
+
+    return podiumPlaces.map(result =>
+      this.getNewCertificate(
+        wcif,
+        definition.eventIdForFormat,
+        format,
+        result,
+        definition.certificateEventName
+      )
+    );
   }
 
   private getBlankCertificatesForUnofficial(wcif: WCIF, eventIdForFormat: string, eventDisplayName: string): Certificate[] {
@@ -346,7 +355,11 @@ export class PrintService {
       }
     };
     if (this.podiumCertificateStyleJson !== '{}') {
-      const styles = JSON.parse(this.podiumCertificateStyleJson);
+      const styles = this.parseJsonWithFallback<Record<string, unknown>>(
+        this.podiumCertificateStyleJson,
+        '{}',
+        'certificate style'
+      );
       for (const key in styles) {
         if (Object.prototype.hasOwnProperty.call(styles, key)) {
           document.defaultStyle[key] = styles[key];
@@ -387,6 +400,15 @@ export class PrintService {
     this.yOffset = savedYOffset;
 
     pdfMake.createPdf(document).getBuffer(callback);
+  }
+
+  private parseJsonWithFallback<T>(value: string, fallbackValue: string, context: string): T {
+    try {
+      return JSON.parse(value) as T;
+    } catch (error) {
+      console.error(`Invalid ${context} JSON. Falling back to the last safe value.`, error);
+      return JSON.parse(fallbackValue) as T;
+    }
   }
 
   private getResultUnit(eventId: string) {

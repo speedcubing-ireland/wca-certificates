@@ -62,6 +62,20 @@
   z-index: 2;
 }
 
+.preview-error {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(127, 29, 29, 0.92);
+  color: #fee2e2;
+  font-size: 12px;
+  line-height: 1.4;
+  z-index: 3;
+}
+
 .slider-controls {
   display: flex;
   flex-direction: column;
@@ -158,4 +172,19 @@ textarea.certificate-layout-json:focus {
   outline: none;
   border-color: var(--accent-primary, #00d4ff);
   box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.json-error,
+.json-help {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.json-error {
+  color: #fca5a5;
+}
+
+.json-help {
+  color: var(--text-secondary, #9ca3af);
 }

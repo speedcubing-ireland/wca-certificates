@@ -1,12 +1,20 @@
 import {Person} from '@wca/helpers';
 import {Result} from '@wca/helpers/lib/models/result';
 import {WCIF} from './types';
+import {getPodiumWarning, podiumByFastestTime} from './podium';
 
 /** Internal id passed to PrintService with official event ids */
 export const UNOFFICIAL_FASTEST_NEWCOMER_333_R1 = 'unofficial:fastest-newcomer-333-r1';
 
-/** Event title shown on the PDF certificate */
-export const CERT_EVENT_FASTEST_NEWCOMER_333 = '3x3x3 Newcomer';
+export interface UnofficialCertificateDefinition {
+  id: string;
+  label: string;
+  eventIdForFormat: string;
+  certificateEventName: string;
+  computePodium: (wcif: WCIF, countriesFilter: string) => Result[];
+  hasSourceResults: (wcif: WCIF) => boolean;
+  getSourceFormat: (wcif: WCIF) => string | null;
+}
 
 export function isUnofficialCertificateId(id: string): boolean {
   return id.startsWith('unofficial:');
@@ -17,51 +25,6 @@ function isNewcomer(person: Person | undefined): boolean {
     return false;
   }
   return !person.wcaId;
-}
-
-function primaryTime(result: Result): number {
-  return result.average > 0 ? result.average : result.best;
-}
-
-function compareByPrimaryTime(a: Result, b: Result): number {
-  const va = primaryTime(a);
-  const vb = primaryTime(b);
-  if (va !== vb) {
-    return va - vb;
-  }
-  return a.best - b.best;
-}
-
-/**
- * Fastest first: gold at index 0. Extends third-place ties like official podium logic.
- * Returns order [third, second, first] with rankingAfterFiltering set for certificate text.
- */
-export function podiumByFastestTime(results: Result[]): Result[] {
-  if (results.length === 0) {
-    return [];
-  }
-  const sorted = [...results].sort(compareByPrimaryTime);
-  const podium = sorted.slice(0, 3);
-  if (podium.length === 3) {
-    let i = 3;
-    const thirdKey = primaryTime(podium[2]);
-    while (i < sorted.length) {
-      if (primaryTime(sorted[i]) === thirdKey) {
-        podium.push(sorted[i]);
-      } else {
-        break;
-      }
-      i++;
-    }
-  }
-  for (let i = 0; i < podium.length; i++) {
-    if (i > 0 && primaryTime(podium[i]) === primaryTime(podium[i - 1])) {
-      podium[i]['rankingAfterFiltering'] = podium[i - 1]['rankingAfterFiltering'];
-    } else {
-      podium[i]['rankingAfterFiltering'] = i + 1;
-    }
-  }
-  return [...podium].reverse();
 }
 
 export function computeFastestNewcomer333R1Podium(wcif: WCIF, countriesFilter: string): Result[] {
@@ -85,15 +48,59 @@ export function computeFastestNewcomer333R1Podium(wcif: WCIF, countriesFilter: s
   return podiumByFastestTime(filtered);
 }
 
-export function unofficialPodiumWarning(podiumLength: number): string {
-  switch (podiumLength) {
-    case 0:
-      return 'Not available yet';
-    case 1:
-      return 'Only 1 person on the podium!';
-    case 2:
-      return 'Only 2 persons on the podium!';
-    default:
-      return '';
-  }
+function getFastestNewcomer333R1Format(wcif: WCIF): string | null {
+  return wcif.events.find(e => e.id === '333')?.rounds?.[0]?.format ?? null;
 }
+
+function hasFastestNewcomer333R1Results(wcif: WCIF): boolean {
+  return !!wcif.events.find(e => e.id === '333')?.rounds?.[0]?.results?.length;
+}
+
+export const UNOFFICIAL_CERTIFICATE_DEFINITIONS: readonly UnofficialCertificateDefinition[] = [
+  {
+    id: UNOFFICIAL_FASTEST_NEWCOMER_333_R1,
+    label: 'Fastest Newcomer (First Round)',
+    eventIdForFormat: '333',
+    certificateEventName: '3x3x3 Newcomer',
+    computePodium: computeFastestNewcomer333R1Podium,
+    hasSourceResults: hasFastestNewcomer333R1Results,
+    getSourceFormat: getFastestNewcomer333R1Format,
+  },
+] as const;
+
+export function getUnofficialCertificateDefinition(id: string): UnofficialCertificateDefinition | undefined {
+  return UNOFFICIAL_CERTIFICATE_DEFINITIONS.find(definition => definition.id === id);
+}
+
+export function createUnofficialCertificateSelection(): Record<string, boolean> {
+  return UNOFFICIAL_CERTIFICATE_DEFINITIONS.reduce<Record<string, boolean>>((selection, definition) => {
+    selection[definition.id] = false;
+    return selection;
+  }, {});
+}
+
+export function getUnofficialPodium(id: string, wcif: WCIF, countriesFilter: string): Result[] {
+  return getUnofficialCertificateDefinition(id)?.computePodium(wcif, countriesFilter) ?? [];
+}
+
+export function getUnofficialWarning(id: string, wcif: WCIF | null, countriesFilter: string): string {
+  if (!wcif) {
+    return getPodiumWarning(0);
+  }
+  return getPodiumWarning(getUnofficialPodium(id, wcif, countriesFilter).length);
+}
+
+export function shouldGenerateBlankUnofficialCertificates(id: string, wcif: WCIF | null, countriesFilter: string): boolean {
+  const definition = getUnofficialCertificateDefinition(id);
+  if (!definition || !wcif) {
+    return false;
+  }
+
+  if (!definition.hasSourceResults(wcif)) {
+    return true;
+  }
+
+  return definition.computePodium(wcif, countriesFilter).length === 0;
+}
+
+export {getPodiumWarning};

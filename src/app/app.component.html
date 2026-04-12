@@ -268,7 +268,7 @@
 
               <!-- Visual editor -->
               <div class="mb-4">
-                <label class="field-label">Certificate Layout:</label>
+                <div class="field-label">Certificate Layout:</div>
                 <app-certificate-editor
                   [orientation]="printService.pageOrientation"
                   [backgroundImage]="printService.background"
@@ -276,6 +276,7 @@
                   [styleJson]="printService.podiumCertificateStyleJson"
                   [xOffset]="printService.xOffset"
                   [yOffset]="printService.yOffset"
+                  (templateJsonChange)="printService.podiumCertificateJson = $event"
                   (xOffsetChange)="printService.xOffset = $event"
                   (yOffsetChange)="printService.yOffset = $event">
                 </app-certificate-editor>

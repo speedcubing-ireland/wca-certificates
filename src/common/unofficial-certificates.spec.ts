@@ -1,10 +1,12 @@
 import {Person} from '@wca/helpers';
 import {WCIF} from './types';
 import {
+  UNOFFICIAL_CERTIFICATE_DEFINITIONS,
+  createUnofficialCertificateSelection,
   computeFastestNewcomer333R1Podium,
-  podiumByFastestTime,
-  unofficialPodiumWarning
+  getPodiumWarning
 } from './unofficial-certificates';
+import {podiumByFastestTime} from './podium';
 import {Result} from '@wca/helpers/lib/models/result';
 import {Event} from '@wca/helpers/lib/models/event';
 
@@ -123,10 +125,25 @@ describe('unofficial-certificates', () => {
 
   describe('unofficialPodiumWarning', () => {
     it('should mirror official podium messages', () => {
-      expect(unofficialPodiumWarning(0)).toBe('Not available yet');
-      expect(unofficialPodiumWarning(1)).toBe('Only 1 person on the podium!');
-      expect(unofficialPodiumWarning(2)).toBe('Only 2 persons on the podium!');
-      expect(unofficialPodiumWarning(3)).toBe('');
+      expect(getPodiumWarning(0)).toBe('Not available yet');
+      expect(getPodiumWarning(1)).toBe('Only 1 person on the podium!');
+      expect(getPodiumWarning(2)).toBe('Only 2 persons on the podium!');
+      expect(getPodiumWarning(3)).toBe('');
+    });
+  });
+
+  describe('definitions', () => {
+    it('should expose unofficial certificate definitions for the UI', () => {
+      expect(UNOFFICIAL_CERTIFICATE_DEFINITIONS.length).toBeGreaterThan(0);
+      expect(UNOFFICIAL_CERTIFICATE_DEFINITIONS[0].label).toContain('Fastest Newcomer');
+    });
+
+    it('should create a disabled selection state for every unofficial certificate', () => {
+      const selection = createUnofficialCertificateSelection();
+      expect(Object.keys(selection)).toEqual(
+        UNOFFICIAL_CERTIFICATE_DEFINITIONS.map(definition => definition.id)
+      );
+      expect(Object.values(selection)).toEqual(jasmine.arrayWithExactContents([false]));
     });
   });
 });

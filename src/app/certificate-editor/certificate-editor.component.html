@@ -28,6 +28,12 @@
           Generating preview...
         </div>
       }
+
+      @if (previewError) {
+        <div class="preview-error" data-cy="preview-error">
+          {{ previewError }}
+        </div>
+      }
     </div>
 
     <!-- Controls -->
@@ -77,12 +83,22 @@
       @if (showLayoutJsonEditor) {
         <textarea id="podium-layout-json"
                   class="certificate-layout-json"
-                  [(ngModel)]="printService.podiumCertificateJson"
+                  [ngModel]="layoutJsonDraft"
+                  (ngModelChange)="onLayoutJsonInput($event)"
                   placeholder="Certificate template JSON..."
                   spellcheck="false"
                   autocorrect="off"
                   autocomplete="off"
                   data-cy="certificate-layout-json"></textarea>
+        @if (layoutJsonError) {
+          <div class="json-error" data-cy="certificate-layout-json-error">
+            {{ layoutJsonError }}
+          </div>
+        } @else {
+          <div class="json-help">
+            The preview updates automatically when the JSON is valid.
+          </div>
+        }
       }
     </div>
   </div>
